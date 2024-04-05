@@ -50,7 +50,7 @@ public class PermissionService {
         auth.put(HttpMethod.POST, null);
         auth.put(HttpMethod.GET, null);
         urlPermissions.put("/gpt/ask", auth);
-
+        urlPermissions.put("/coin/{coinName}", auth);
 
         auth = new HashMap<>();
         auth.put(HttpMethod.POST, Set.of(UserRole.ADMIN));

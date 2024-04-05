@@ -38,6 +38,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> {
                     authorize.requestMatchers(HttpMethod.GET,"/static/**").permitAll();
                     Map<String, Map<HttpMethod, Set<UserRole>>> urlPermissions = permissionService.getUrlPermissions();
+
                     urlPermissions.forEach((url, methods) -> {
                         methods.forEach((method, roles) -> {
                             if (roles == null) {

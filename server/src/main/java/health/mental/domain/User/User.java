@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +27,8 @@ import java.util.List;
 
 public class User implements UserDetails {
 
+    @Value("${user.default.money}")
+    private Integer defaultBalance;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -51,7 +54,7 @@ public class User implements UserDetails {
         this.password = password;
         this.role = role;
         this.balanceInvested = new BigDecimal(0);
-        this.balanceAvailable = new BigDecimal(0);
+        this.balanceAvailable = new BigDecimal(defaultBalance);
     }
 
 

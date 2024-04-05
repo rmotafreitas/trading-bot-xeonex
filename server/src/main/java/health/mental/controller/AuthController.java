@@ -16,6 +16,7 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
+import org.jose4j.lang.JoseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -48,16 +49,26 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid AuthDTO authDTO) {
 
-        var usernamePassword = new UsernamePasswordAuthenticationToken(authDTO.login(), Utils.decodeJwt(authDTO.password()));
+        if(userRepository.findByLogin(authDTO.login()) == null){
+              register(new AuthRegisterDTO(authDTO.login(), authDTO.password(), UserRole.USER));
+        }
+
+
+
+
 
         try {
+            var usernamePassword = new UsernamePasswordAuthenticationToken(authDTO.login(), Utils.decodeJwt(authDTO.password()));
             authenticationManager.authenticate(usernamePassword);
+            var authentication = authenticationManager.authenticate(usernamePassword);
+            var token = tokenService.generateToken((User) authentication.getPrincipal());
+            return ResponseEntity.ok(new LoginResponseDTO(token));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body("{\"error\": \"Invalid login or password\"}");
+        }catch (TokenInvalidException e){
+            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body("{\"error\": \"Invalid token\"}");
         }
-        var authentication = authenticationManager.authenticate(usernamePassword);
-        var token = tokenService.generateToken((User) authentication.getPrincipal());
-        return ResponseEntity.ok(new LoginResponseDTO(token));
+
     }
 
 
