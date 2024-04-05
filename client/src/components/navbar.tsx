@@ -3,22 +3,25 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ModeToggle } from "./mode-toggle";
 import { Button } from "./ui/button";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export function Navbar() {
   const [isLogged, setIsLogged] = useState(false);
 
+  const { user } = useAuth();
+
   useEffect(() => {
-    try {
+    if (user) {
       setIsLogged(true);
-    } catch (error) {
+    } else {
       setIsLogged(false);
     }
-  }, []);
+  }, [user]);
 
   return (
     <nav className="flex px-8 py-4 justify-between w-full items-center border-border border-b-2">
-      <Link to="/" className="text-primary font-bold text-2xl bg-gradient-to-r">
-        planner.ai
+      <Link to="/" className="text-primary font-bold text-2xl">
+        xeonex
       </Link>
       <ul className="flex gap-5 items-center">
         <ModeToggle />

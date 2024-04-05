@@ -3,26 +3,36 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 const api = axios.create({
-  baseURL: "http://26.108.87.238:8080",
-  headers: {
-    Authorization: `Bearer ${Cookies.get("userjwt")}`,
-  },
+  baseURL: "http://10.14.0.41:8080",
 });
 
-const login = async (user: string, login: string): Promise<boolean> => {
-  const res = await api.post("/auth", { user, login });
+const doAuth = async (login: string, password: string): Promise<boolean> => {
+  const res = await api.post("/auth/login", { login, password });
 
   if (res.status !== 200) {
     return false;
   }
 
-  Cookies.set("userjwt", res.data.token);
-  api.defaults.headers.Authorization = `Bearer ${res.data.jwt}`;
+  api.defaults.headers.Authorization = `Bearer ${res.data.token}`;
+
+  Cookies.set(
+    "user",
+    JSON.stringify({
+      login,
+      password,
+    })
+  );
   return true;
 };
 
-const createUser = async (user: string, login: string) => {
-  await api.post("/users", { user, login });
+const getMe = async () => {
+  const res = await api.get("/auth/me");
+
+  if (res.status !== 200) {
+    return null;
+  }
+
+  return res.data;
 };
 
-export { api, login, createUser };
+export { api, doAuth, getMe };

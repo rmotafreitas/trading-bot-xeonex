@@ -1,10 +1,18 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
-import { api } from "@/lib/api";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 export function ProfilePage() {
+  const { user, signOut } = useAuth();
+
+  const router = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    router("/auth");
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -13,7 +21,10 @@ export function ProfilePage() {
           <h1 className="font-black text-3xl justify-center items-center text-center flex flex-row gap-4">
             <p>My Profile</p>
           </h1>
-          <Button className="flex flex-1 max-sm:w-full justify-center items-center">
+          <Button
+            onClick={handleLogout}
+            className="flex flex-1 max-sm:w-full justify-center items-center"
+          >
             Logout
           </Button>
         </div>
