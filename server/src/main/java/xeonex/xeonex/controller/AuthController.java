@@ -70,12 +70,12 @@ public class AuthController {
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
-        if (updateRequest.getRisk() != null && updateRequest.getRisk().getRiskLevel() > 5 && updateRequest.getRisk().getRiskLevel() < 80) {
-            user.setRisk(updateRequest.getRisk());
+        if (updateRequest.getRisk() != null && updateRequest.getRisk() >= 5 && updateRequest.getRisk() <= 80) {
+            user.setRisk(new Risk(updateRequest.getRisk()));
         }else{
             return ResponseEntity.badRequest().body("{\"error\": \"Invalid risk level, should be between 5 and 80\"}");
         }
-        if (updateRequest.getBalanceAvailable() != null && updateRequest.getBalanceAvailable().compareTo(user.getBalanceAvailable()) >= 0) {
+        if (updateRequest.getBalanceAvailable() != null && updateRequest.getBalanceAvailable()   .compareTo( user.getBalanceAvailable()) >= 0) {
             user.setBalanceAvailable(updateRequest.getBalanceAvailable());
         }else{
             return ResponseEntity.badRequest().body("{\"error\": \"Invalid balance update, should be greater than the actual balance\"}");

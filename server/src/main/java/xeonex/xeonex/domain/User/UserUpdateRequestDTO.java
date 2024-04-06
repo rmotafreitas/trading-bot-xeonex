@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserUpdateRequestDTO {
-    private Risk risk;
+    private Integer risk;
     private BigDecimal balanceAvailable;
 
     private String currency;

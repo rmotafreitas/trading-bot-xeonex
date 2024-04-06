@@ -3,9 +3,11 @@ package xeonex.xeonex.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import xeonex.binance.model.BinanceMapper;
 import xeonex.binance.model.Candle;
 import xeonex.binance.model.Line;
+import xeonex.xeonex.Utils;
 import xeonex.xeonex.domain.User.Currency;
 import xeonex.xeonex.domain.User.CurrencyDTO;
 import xeonex.xeonex.domain.User.User;
@@ -67,30 +69,47 @@ public class CoinInfoController {
         User u = (User) userRepository.findByLogin(userLogin);
 
 
-
-
         if(!cryptoCurrencyService.getCryptoCyrrency().keySet().contains(pair)){
             return ResponseEntity.badRequest().body("Invalid pair");
         }
 
+        return ResponseEntity.ok(coinPrice(pair + "-" + u.getCurrency().getCurrency()));
 
 
 
-        String url = UPHOLD_API_URL_PRICE + "/" +  pair + "-" + u.getCurrency().getCurrency();
 
+
+
+    }
+
+    public String coinPrice(String pair) {
+
+        String url = UPHOLD_API_URL_PRICE + "/" +  pair;
         String body = restTemplate.getForEntity(url, String.class).getBody();
 
-
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(body);
+        JsonNode jsonNode = null;
+        try {
+            jsonNode = objectMapper.readTree(body);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
-        return ResponseEntity.ok(jsonNode.toString());
+
+        double ask = jsonNode.get("ask").asDouble();
+        double bid = jsonNode.get("bid").asDouble();
 
 
+        double spread = ask - bid;
+        double spreadPercentage = (spread / ask) * 100;
 
 
+        ((ObjectNode) jsonNode).put("spread", spread);
 
 
+        ((ObjectNode) jsonNode).put("spread_percentage", spreadPercentage);
+
+        return jsonNode.toString();
     }
 
 
@@ -143,9 +162,7 @@ public ResponseEntity<List<String>> getPairs() {
 
     @RequestMapping("/timeTypes")
     public ResponseEntity<List<String>> getPossibleDayTypes() {
-        List<String> possibleDayTypes = Arrays.asList(
-                "1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w", "1M"
-        );
+        List<String> possibleDayTypes = Utils.getIntervals();
         return ResponseEntity.ok(possibleDayTypes);
     }
 

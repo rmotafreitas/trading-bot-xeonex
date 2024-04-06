@@ -10,6 +10,12 @@ import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Utils {
 
@@ -48,6 +54,38 @@ public class Utils {
         response.setStatus(statusCode);
         response.setContentType("application/json");
         response.getWriter().write("{\"error\": \"" + errorMessage + "\"}");
+    }
+
+    public static List<String> getTradeType(){
+        return List.of("SHORT", "LONG");
+    }
+
+    public static List<String> getIntervals(){
+        return List.of("1m", "5m", "15m", "30m", "1h", "2h", "4h", "12h", "1d","1w");
+    }
+
+
+    public static String readFromFile(String filePath) {
+        try {
+
+            return new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static Map<String,String> getWindowMoney(){
+        Map<String,String> mp = new HashMap<>();
+        mp.put("1d", "1h");
+        mp.put("4h", "15m");
+        mp.put("15m", "1m");
+        return mp;
+    }
+
+    public static List<String> getTradeStatus(){
+        return List.of("OPEN", "CLOSED","WAITING","CANCELLED");
     }
 }
 
