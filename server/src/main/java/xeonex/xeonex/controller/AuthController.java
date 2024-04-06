@@ -37,9 +37,6 @@ public class AuthController {
         }
 
 
-
-
-
         try {
             var usernamePassword = new UsernamePasswordAuthenticationToken(authDTO.login(), Utils.decodeJwt(authDTO.password()));
             authenticationManager.authenticate(usernamePassword);
@@ -66,30 +63,30 @@ public class AuthController {
     @PutMapping("/me")
     public ResponseEntity<?> updateLoggedInUser(@RequestHeader("Authorization") String bearerToken,
                                                 @RequestBody UserUpdateRequestDTO updateRequest) {
+
         String token = bearerToken.substring(7);
         String userLogin = tokenService.validateToken(token);
-
-
-
         User user = (User) userRepository.findByLogin( userLogin);
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
-
-
         if (updateRequest.getRisk() != null && updateRequest.getRisk().getRiskLevel() > 5 && updateRequest.getRisk().getRiskLevel() < 80) {
             user.setRisk(updateRequest.getRisk());
         }else{
             return ResponseEntity.badRequest().body("{\"error\": \"Invalid risk level, should be between 5 and 80\"}");
         }
-
-
-        if (updateRequest.getBalanceAvailable() != null && updateRequest.getBalanceAvailable().compareTo(user.getBalanceAvailable()) > 0) {
+        if (updateRequest.getBalanceAvailable() != null && updateRequest.getBalanceAvailable().compareTo(user.getBalanceAvailable()) >= 0) {
             user.setBalanceAvailable(updateRequest.getBalanceAvailable());
         }else{
             return ResponseEntity.badRequest().body("{\"error\": \"Invalid balance update, should be greater than the actual balance\"}");
         }
+        if(updateRequest.getCurrency() == null){
+            return ResponseEntity.badRequest().body("{\"error\": \"Currency is required\"}");
+        }
 
+        String currencyString = updateRequest.getCurrency();
+        Currency currencyEnum = Currency.fromString(currencyString);
+        user.setCurrency(currencyEnum);
 
         userRepository.save(user);
 
@@ -97,13 +94,6 @@ public class AuthController {
     }
 
 
-    /*
-    @GetMapping("/test")
-    public ResponseEntity test(HttpServletRequest request) {
-
-        return ResponseEntity.ok().body("Test");
-    }
-*/
     @PostMapping("/register")
     public ResponseEntity register(@RequestBody @Valid AuthRegisterDTO authDTO) {
 
@@ -115,7 +105,8 @@ public class AuthController {
 
 
         String encodedPassword =  new BCryptPasswordEncoder().encode(Utils.decodeJwt(authDTO.password()));
-        User user = new User(authDTO.login(), encodedPassword, authDTO.role());
+        User user = new User(authDTO.login(), encodedPassword, authDTO.role(),Currency.TetherDollar);
+
         userRepository.save(user);
         return ResponseEntity.ok().build();
     }

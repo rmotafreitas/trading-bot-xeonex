@@ -8,7 +8,7 @@ import lombok.*;
 import java.math.BigDecimal;
 
 
-@AllArgsConstructor
+
 @NoArgsConstructor
 @Getter
 @Setter
@@ -23,6 +23,18 @@ public class Candle {
     private BigDecimal volume;
 
     private Long closeTime;
+
+
+
+    public Candle(Long openTime, BigDecimal openPrice, BigDecimal highPrice, BigDecimal lowPrice, BigDecimal closePrice, BigDecimal volume, Long closeTime) {
+        this.openTime = openTime;
+        this.openPrice = openPrice;
+        this.highPrice = highPrice;
+        this.lowPrice = lowPrice;
+        this.closePrice = closePrice;
+        this.volume = volume;
+        this.closeTime = closeTime;
+    }
 
     @Override
     public String toString() {

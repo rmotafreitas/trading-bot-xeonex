@@ -2,8 +2,8 @@ package xeonex.xeonex.domain.User;
 
 public enum UserRole {
     ADMIN("admin"),
-    USER("user"),
-    PSICO("psico");
+    USER("user");
+
 
 
     private String role;

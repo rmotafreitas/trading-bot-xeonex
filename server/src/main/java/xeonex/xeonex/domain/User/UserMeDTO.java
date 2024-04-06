@@ -8,7 +8,8 @@ public record UserMeDTO(
         BigDecimal balanceInvested,
         BigDecimal balanceAvailable,
         BigDecimal balanceTotal,
-        Integer risk
+        Integer risk,
+        Currency currency
 ) {
 
 

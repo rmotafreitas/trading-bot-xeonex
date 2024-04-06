@@ -29,7 +29,7 @@ public class BinanceService {
 
             List<Candle> candles = new ArrayList<>();
             for (List<Object> data : candleData) {
-                Candle candle = new Candle();
+                Candle candle = new Candle( );
 
                 candle.setOpenTime(((Long) data.get(0)));
                 candle.setOpenPrice(new BigDecimal((String) data.get(1)));
@@ -38,6 +38,7 @@ public class BinanceService {
                 candle.setClosePrice(new BigDecimal((String) data.get(4)));
                 candle.setVolume(new BigDecimal((String) data.get(5)));
                 candle.setCloseTime(((Long) data.get(6)));
+
 
                 candles.add(candle);
             }

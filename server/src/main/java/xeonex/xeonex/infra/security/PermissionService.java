@@ -23,11 +23,11 @@ public class PermissionService {
         hierarchy = new HashMap<>();
 
         SimpleGrantedAuthority user = new SimpleGrantedAuthority(UserRole.USER.toString());
-        SimpleGrantedAuthority psico = new  SimpleGrantedAuthority(UserRole.PSICO.toString());
+
         SimpleGrantedAuthority admin = new SimpleGrantedAuthority(UserRole.ADMIN.toString());
 
-        hierarchy.put(UserRole.ADMIN, List.of(psico, user, admin));
-        hierarchy.put(UserRole.PSICO, List.of(user,psico));
+        hierarchy.put(UserRole.ADMIN, List.of( user, admin));
+
         hierarchy.put(UserRole.USER, List.of(user));
 
         // permissions
@@ -46,13 +46,9 @@ public class PermissionService {
         urlPermissions.put("/gpt/ask", auth);
         urlPermissions.put("/coin/{coinName}", auth);
 
-        auth = new HashMap<>();
-        auth.put(HttpMethod.POST, Set.of(UserRole.ADMIN));
-        urlPermissions.put("/product", auth);
 
-        auth = new HashMap<>();
-        auth.put(HttpMethod.GET, Set.of(UserRole.PSICO));
-        urlPermissions.put("/product/{id}", auth);
+
+
 
     }
 
