@@ -1,9 +1,8 @@
-import Cookies from "js-cookie";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ModeToggle } from "./mode-toggle";
 import { Button } from "./ui/button";
-import { useAuth } from "@/lib/hooks/useAuth";
 
 export function Navbar() {
   const [isLogged, setIsLogged] = useState(false);

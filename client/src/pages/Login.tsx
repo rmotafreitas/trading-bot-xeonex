@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 export function LoginPage() {
   const router = useNavigate();
 
-  const { user, signIn } = useAuth();
+  const { signIn } = useAuth();
 
   const hanko = useMemo(() => hankoInstance, []);
 
