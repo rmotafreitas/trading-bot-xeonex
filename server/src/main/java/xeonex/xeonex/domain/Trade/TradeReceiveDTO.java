@@ -24,6 +24,7 @@ public class TradeReceiveDTO {
     private BigDecimal takeProfit;
 
     private BigDecimal stopLoss;
+    private BigDecimal assetprice;
 
 
 

@@ -3,11 +3,14 @@ package xeonex.xeonex.domain.Trade;
 
 import jakarta.persistence.*;
 import lombok.*;
-import xeonex.xeonex.domain.User.Currency;
+import org.springframework.beans.factory.annotation.Autowired;
 import xeonex.xeonex.domain.User.Risk;
 import xeonex.xeonex.domain.User.User;
+import xeonex.xeonex.repositories.TradeLogRepository;
 
 import java.math.BigDecimal;
+import java.security.Timestamp;
+import java.time.LocalDateTime;
 
 @Entity(name = "trade")
 @Table(name = "trade")
@@ -28,7 +31,7 @@ public class Trade {
     private BigDecimal initialInvestment;
 
     @Column(name = "asset")
-    private Currency asset;
+    private String asset;
 
     @Column(name = "current_balance")
     private BigDecimal currentBalance;
@@ -40,6 +43,7 @@ public class Trade {
     @Column(name = "TakeProfit")
     private BigDecimal TakeProfit;
 
+
     @Column(name = "StopLoss")
     private BigDecimal StopLoss;
 
@@ -49,7 +53,33 @@ public class Trade {
     @Column(name = "TradeStatus")
     private String TradeStatus;
 
-    @OneToOne
+    @ManyToOne
     private User user;
 
+    @Column(name = "date")
+    private LocalDateTime date;
+
+    @Column(name = "quantity_asset")
+    private BigDecimal quantityAsset;
+
+    public Trade(BigDecimal initialInvestment, String asset, BigDecimal currentBalance, Risk risk, BigDecimal takeProfit, BigDecimal stopLoss, String tradeType, String tradeStatus, User user,BigDecimal quantityAsset) {
+        this.initialInvestment = initialInvestment;
+        this.asset = asset;
+        this.currentBalance = currentBalance;
+        this.risk = risk;
+        this.TakeProfit = takeProfit;
+        this.StopLoss = stopLoss;
+        this.TradeType = tradeType;
+        this.TradeStatus = tradeStatus;
+        this.user = user;
+        this.date = LocalDateTime.now();
+        this.quantityAsset = quantityAsset;
+    }
+
+    //Penso rápido : eu devia usar ASPECT, mas não estou a conseguir e não vou perder mais tempo, vou fazer assim
+
+    public void setTradeStatus(String tradeStatus) {
+
+        TradeStatus = tradeStatus;
+    }
 }

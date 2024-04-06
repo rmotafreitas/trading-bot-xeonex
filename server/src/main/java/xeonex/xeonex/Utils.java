@@ -64,9 +64,7 @@ public class Utils {
         return List.of("1m", "5m", "15m", "30m", "1h", "2h", "4h", "12h", "1d","1w");
     }
 
-    public static List<String> getTradeStatus(){
-        return List.of("OPEN", "CLOSED");
-    }
+
     public static String readFromFile(String filePath) {
         try {
 
@@ -84,6 +82,10 @@ public class Utils {
         mp.put("4h", "15m");
         mp.put("15m", "1m");
         return mp;
+    }
+
+    public static List<String> getTradeStatus(){
+        return List.of("OPEN", "CLOSED","WAITING","CANCELLED");
     }
 }
 
