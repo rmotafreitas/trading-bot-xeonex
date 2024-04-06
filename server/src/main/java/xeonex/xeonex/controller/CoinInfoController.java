@@ -6,15 +6,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import xeonex.binance.model.BinanceMapper;
 import xeonex.binance.model.Candle;
 import xeonex.binance.model.Line;
+import xeonex.xeonex.domain.User.Currency;
+import xeonex.xeonex.domain.User.CurrencyDTO;
+import xeonex.xeonex.domain.User.User;
+import xeonex.xeonex.infra.security.TokenService;
+import xeonex.xeonex.repositories.UserRepository;
 import xeonex.xeonex.service.BinanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import xeonex.xeonex.service.CryptoCurrencyService;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/coin")
@@ -31,17 +39,44 @@ public class CoinInfoController {
     @Autowired
     private BinanceService binanceService;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    @Autowired
+    private CryptoCurrencyService cryptoCurrencyService;
 
+    private final RestTemplate restTemplate = new RestTemplate();
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TokenService tokenService;
+
+    @GetMapping("/currency")
+    public ResponseEntity<List<CurrencyDTO>> getCurrency() {
+        List<CurrencyDTO> currencies = new ArrayList<>();
+        for (Currency currency : Currency.values()) {
+            currencies.add(new CurrencyDTO(currency.name(), currency.getCurrency()));
+        }
+        return ResponseEntity.ok(currencies);
+    }
 
 
     @RequestMapping("/{pair}")
-    public ResponseEntity<String> getCoinPrice(@PathVariable String pair) throws JsonProcessingException {
+    public ResponseEntity<String> getCoinPrice(@RequestHeader("Authorization") String bearerToken ,@PathVariable String pair) throws JsonProcessingException {
 
-        if(pair.contains("USDT")){
-            pair = pair.replace("USDT", "-USDT");
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User u = (User) userRepository.findByLogin(userLogin);
+
+
+
+
+        if(!cryptoCurrencyService.getCryptoCyrrency().keySet().contains(pair)){
+            return ResponseEntity.badRequest().body("Invalid pair");
         }
-        String url = UPHOLD_API_URL_PRICE + "/" + pair ;
+
+
+
+
+        String url = UPHOLD_API_URL_PRICE + "/" +  pair + "-" + u.getCurrency().getCurrency();
 
         String body = restTemplate.getForEntity(url, String.class).getBody();
 
@@ -60,13 +95,24 @@ public class CoinInfoController {
 
 
     @RequestMapping("/{pair}/chart")
-    public ResponseEntity<?> getCoinPriceFallback(@PathVariable String pair,
+    public ResponseEntity<?> getCoinPriceFallback(@RequestHeader("Authorization") String bearerToken ,@PathVariable String pair,
                                                   @RequestParam(defaultValue = "1d")  String interval,
                                                   @RequestParam(defaultValue = "candle")  String type) {
 
         BinanceMapper binanceMapper = new BinanceMapper();
 
-        String url = BINANCE_API_URL_KLINE + "?symbol=" + pair.toUpperCase() + "&interval=" + interval;
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User u = (User) userRepository.findByLogin(userLogin);
+
+        if(!cryptoCurrencyService.getCryptoCyrrency().keySet().contains(pair)){
+            return ResponseEntity.badRequest().body("Invalid pair");
+        }
+
+
+
+        String url = BINANCE_API_URL_KLINE + "?symbol=" + pair.toUpperCase() + u.getCurrency().getCurrency() + "&interval=" + interval;
+
 
 
         if ("candle".equals(type)) {
@@ -90,11 +136,10 @@ public class CoinInfoController {
 
 @GetMapping("/pairs")
 public ResponseEntity<List<String>> getPairs() {
-    List<String> possibleDayTypes = Arrays.asList(
-            "BTCUSDT", "ETHUSDT"
-    );
+    List<String> possibleDayTypes = (List<String>) cryptoCurrencyService.getCryptoCyrrency().keySet();
     return ResponseEntity.ok(possibleDayTypes);
 }
+
 
     @RequestMapping("/timeTypes")
     public ResponseEntity<List<String>> getPossibleDayTypes() {
@@ -103,6 +148,9 @@ public ResponseEntity<List<String>> getPairs() {
         );
         return ResponseEntity.ok(possibleDayTypes);
     }
+
+
+
 
 
 

@@ -5,15 +5,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class UserUpdateRequestDTO {
-    private Risk risk;
-    private BigDecimal balanceAvailable;
-
-    private String currency;
+@AllArgsConstructor
+public class CurrencyDTO {
+    private String name;
+    private String token;
 }
