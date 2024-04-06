@@ -11,7 +11,6 @@ type AuthData = {
 };
 
 type User = {
-  user: string;
   login: string;
   // Add more user-related fields as needed
 };
