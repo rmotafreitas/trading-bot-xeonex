@@ -1,17 +1,26 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 // @ts-expect-error Because we are using js-cookie
 import Cookies from "js-cookie";
-import { doAuth, getMe } from "../api";
+import { doAuth, getMe, save as saveAPI } from "../api";
 
 // Define types for authentication data
 type AuthData = {
   user: User | null;
-  signIn: (email: string, password: string) => void;
+  signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => void;
+  update: (user: User) => Promise<boolean>;
+  save: (user: User) => Promise<boolean>;
+  addAmount: (amount: number) => Promise<boolean>;
 };
 
-type User = {
+export type User = {
   login: string;
+  role: string;
+  balanceInvested: number;
+  balanceAvailable: number;
+  balanceTotal: number;
+  risk: number;
+  currency: string;
   // Add more user-related fields as needed
 };
 
@@ -52,6 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signOut = () => {
     Cookies.remove("user");
     Cookies.remove("hanko");
+    Cookies.remove("token");
     setUser(null);
   };
 
@@ -73,6 +83,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return false;
   };
 
+  const update = async (user: User): Promise<boolean> => {
+    setUser(user);
+    return true;
+  };
+
+  const save = async (user: User): Promise<boolean> => {
+    const res = await saveAPI(user);
+    if (res) {
+      const updatedUser = await getMe();
+      if (updatedUser) {
+        setUser(updatedUser);
+      }
+    }
+    return res;
+  };
+
+  const addAmount = async (amount: number): Promise<boolean> => {
+    if (!user) {
+      return false;
+    }
+    if (amount < 0) {
+      return false;
+    }
+
+    const newUser = {
+      ...user,
+      balanceAvailable: user.balanceAvailable + amount,
+    };
+
+    const res = await saveAPI(newUser);
+
+    if (res) {
+      const updatedUser = await getMe();
+      if (updatedUser) {
+        setUser(updatedUser);
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   useEffect(() => {
     console.log("Fetching user from cookies");
     fetchUserFromCookies();
@@ -84,6 +136,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       user,
       signIn,
       signOut,
+      update,
+      save,
+      addAmount,
     }),
     [user]
   );
