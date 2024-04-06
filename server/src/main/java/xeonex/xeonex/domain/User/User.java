@@ -1,11 +1,8 @@
 package xeonex.xeonex.domain.User;
 
+import lombok.*;
 import xeonex.xeonex.infra.security.PermissionService;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,13 +16,16 @@ import java.util.Collection;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-
+@Setter
 @EqualsAndHashCode(of = {"id"})
 
 public class User implements UserDetails {
 
-    @Value("${user.default.money}")
-    private Integer defaultBalance;
+
+    private int defaultMoney = 1000;
+
+    @Value("${user.default.risk}")
+    private int defaultRisk;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -43,6 +43,12 @@ public class User implements UserDetails {
 
     @Column(name = "balance_available")
     private BigDecimal balanceAvailable;
+
+
+
+    @Column(name = "risk")
+    @Embedded
+    private Risk risk;
     @Column(name = "role")
     private UserRole role;
 
@@ -51,7 +57,9 @@ public class User implements UserDetails {
         this.password = password;
         this.role = role;
         this.balanceInvested = new BigDecimal(0);
-        this.balanceAvailable = new BigDecimal(defaultBalance);
+        System.out.println(defaultMoney);
+        this.balanceAvailable = new BigDecimal(defaultMoney);
+        this.risk = new Risk(5);
     }
 
 

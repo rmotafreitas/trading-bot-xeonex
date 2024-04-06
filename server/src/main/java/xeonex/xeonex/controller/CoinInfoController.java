@@ -1,5 +1,8 @@
 package xeonex.xeonex.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import xeonex.binance.model.BinanceMapper;
 import xeonex.binance.model.Candle;
 import xeonex.binance.model.Line;
@@ -18,11 +21,12 @@ import java.util.List;
 public class CoinInfoController {
 
 
-    @Value("${binance.api.url.price}")
-    private  String BINANCE_API_URL_PRICE;
+
 
     @Value("${binance.api.url.kline}")
     private String BINANCE_API_URL_KLINE;
+    @Value("${uphold.api.url.price}")
+    private String UPHOLD_API_URL_PRICE;
 
     @Autowired
     private BinanceService binanceService;
@@ -31,28 +35,38 @@ public class CoinInfoController {
 
 
 
-    @RequestMapping("/{coinName}")
-    public ResponseEntity<String> getCoinPrice(@PathVariable String coinName) {
+    @RequestMapping("/{pair}")
+    public ResponseEntity<String> getCoinPrice(@PathVariable String pair) throws JsonProcessingException {
 
-        String url = BINANCE_API_URL_PRICE + "?symbol=" + coinName.toUpperCase() + "USDT";
+        if(pair.contains("USDT")){
+            pair = pair.replace("USDT", "-USDT");
+        }
+        String url = UPHOLD_API_URL_PRICE + "/" + pair ;
 
-        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+        String body = restTemplate.getForEntity(url, String.class).getBody();
 
 
-        return response;
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(body);
+
+        return ResponseEntity.ok(jsonNode.toString());
+
+
+
+
+
+
     }
 
 
-    @RequestMapping("/{coinName}/chart")
-    public ResponseEntity<?> getCoinPriceFallback(@PathVariable String coinName,
+    @RequestMapping("/{pair}/chart")
+    public ResponseEntity<?> getCoinPriceFallback(@PathVariable String pair,
                                                   @RequestParam(defaultValue = "1d")  String interval,
                                                   @RequestParam(defaultValue = "candle")  String type) {
 
-
-
         BinanceMapper binanceMapper = new BinanceMapper();
 
-        String url = BINANCE_API_URL_KLINE + "?symbol=" + coinName.toUpperCase() + "USDT&interval=" + interval;
+        String url = BINANCE_API_URL_KLINE + "?symbol=" + pair.toUpperCase() + "&interval=" + interval;
 
 
         if ("candle".equals(type)) {
@@ -74,7 +88,13 @@ public class CoinInfoController {
     }
 
 
-
+@GetMapping("/pairs")
+public ResponseEntity<List<String>> getPairs() {
+    List<String> possibleDayTypes = Arrays.asList(
+            "BTCUSDT", "ETHUSDT"
+    );
+    return ResponseEntity.ok(possibleDayTypes);
+}
 
     @RequestMapping("/timeTypes")
     public ResponseEntity<List<String>> getPossibleDayTypes() {

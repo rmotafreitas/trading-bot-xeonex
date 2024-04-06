@@ -7,7 +7,8 @@ public record UserMeDTO(
         UserRole role,
         BigDecimal balanceInvested,
         BigDecimal balanceAvailable,
-        BigDecimal balanceTotal
+        BigDecimal balanceTotal,
+        Integer risk
 ) {
 
 

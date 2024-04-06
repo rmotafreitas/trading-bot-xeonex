@@ -15,6 +15,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -55,20 +57,43 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getLoggedInUser(@RequestHeader("Authorization") String bearerToken) {
-
-
-
             String token = bearerToken.substring(7);
             String userLogin = tokenService.validateToken(token);
-
             userRepository.findByLogin(userLogin);
-
-
             return ResponseEntity.ok( UserMapper.toUserMeDTO((User) userRepository.findByLogin(userLogin)));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<?> updateLoggedInUser(@RequestHeader("Authorization") String bearerToken,
+                                                @RequestBody UserUpdateRequestDTO updateRequest) {
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
 
 
 
+        User user = (User) userRepository.findByLogin( userLogin);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
 
+
+        if (updateRequest.getRisk() != null && updateRequest.getRisk().getRiskLevel() > 5 && updateRequest.getRisk().getRiskLevel() < 80) {
+            user.setRisk(updateRequest.getRisk());
+        }else{
+            return ResponseEntity.badRequest().body("{\"error\": \"Invalid risk level, should be between 5 and 80\"}");
+        }
+
+
+        if (updateRequest.getBalanceAvailable() != null && updateRequest.getBalanceAvailable().compareTo(user.getBalanceAvailable()) > 0) {
+            user.setBalanceAvailable(updateRequest.getBalanceAvailable());
+        }else{
+            return ResponseEntity.badRequest().body("{\"error\": \"Invalid balance update, should be greater than the actual balance\"}");
+        }
+
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok(UserMapper.toUserMeDTO(user));
     }
 
 
