@@ -1,10 +1,7 @@
-import axios from "axios";
 // @ts-expect-error Because we are using js-cookie
 import Cookies from "js-cookie";
-
-const api = axios.create({
-  baseURL: "http://10.14.0.41:8080",
-});
+import { User } from "../hooks/useAuth";
+import api from "./api";
 
 const doAuth = async (login: string, password: string): Promise<boolean> => {
   const res = await api.post("/auth/login", { login, password });
@@ -14,6 +11,7 @@ const doAuth = async (login: string, password: string): Promise<boolean> => {
   }
 
   api.defaults.headers.Authorization = `Bearer ${res.data.token}`;
+  Cookies.set("token", res.data.token);
 
   Cookies.set(
     "user",
@@ -35,20 +33,36 @@ const getMe = async () => {
   return res.data;
 };
 
-export type TypeChartData = {
+export type TypeChartDataLine = {
   yprice: number;
   xtime: string;
 };
 
+export type TypeChartDataCandle = {
+  openPrice: number;
+  closePrice: number;
+  highPrice: number;
+  lowPrice: number;
+  openTime: string;
+};
+
 const getChart = async ({
-  idCoin = "BTCUSDT",
-  type = "line",
+  idCoin = "BTC",
   interval = "1d",
+  type = "line",
 }: {
-  idCoin?: string;
+  idCoin?: "BTC" | "ETH";
   type?: "candle" | "line";
   interval: "1h" | "1d" | "1w" | "1m";
-}): Promise<TypeChartData[]> => {
+}): Promise<TypeChartDataLine[] | TypeChartDataCandle[]> => {
+  // set headers if not already set and cookie is present
+  if (!api.defaults.headers.Authorization) {
+    const token = Cookies.get("token");
+    if (token) {
+      api.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
   const res = await api.get(
     `/coin/${idCoin}/chart?type=${type}&interval=${interval}`
   );
@@ -60,4 +74,103 @@ const getChart = async ({
   return res.data;
 };
 
-export { api, doAuth, getMe, getChart };
+const getChartLine = async (
+  idCoin: "BTC" | "ETH" = "BTC",
+  interval: "1h" | "1d" | "1w" | "1m" = "1d"
+) => {
+  return (await getChart({
+    idCoin,
+    interval,
+    type: "line",
+  })) as TypeChartDataLine[];
+};
+
+const getChartCandle = async (
+  idCoin: "BTC" | "ETH" = "BTC",
+  interval: "1h" | "1d" | "1w" | "1m" = "1d"
+) => {
+  return (await getChart({
+    idCoin,
+    interval,
+    type: "candle",
+  })) as TypeChartDataCandle[];
+};
+
+export type TypeCurrency = {
+  name: string;
+  token: string;
+};
+
+const getPossibleCurrencies = async (): Promise<TypeCurrency[]> => {
+  const res = await api.get("/coin/currency");
+
+  if (res.status !== 200) {
+    return [];
+  }
+
+  return res.data;
+};
+
+const save = async (data: User): Promise<boolean> => {
+  const allCurrencies = await getPossibleCurrencies();
+
+  const res = await api.put("/auth/me", {
+    risk: data.risk,
+    balanceAvailable: data.balanceAvailable.toString(),
+    currency: allCurrencies.find((currency) => currency.name === data.currency)
+      ?.token,
+  });
+
+  if (res.status !== 200) {
+    return false;
+  }
+
+  return true;
+};
+
+export type TypeCryptoLive = {
+  ask: number;
+  bid: number;
+  currency: string;
+  spread: number;
+  spread_percentage: number;
+  day_percent_change: number;
+};
+
+const getCryptoLive = async (
+  coin: "BTC" | "ETH"
+): Promise<TypeCryptoLive | null> => {
+  const res = await api.get(`/coin/${coin}`);
+
+  if (res.status !== 200) {
+    return null;
+  }
+
+  // To get day_percent_change we need to calculate it, so we need candle data
+  const candleData = await getChartCandle(coin, "1d");
+
+  if (candleData.length < 2) {
+    return null;
+  }
+
+  const day_percent_change =
+    ((candleData[candleData.length - 1].closePrice -
+      candleData[candleData.length - 1].openPrice) /
+      candleData[candleData.length - 1].openPrice) *
+    100;
+
+  return {
+    ...res.data,
+    day_percent_change,
+  };
+};
+
+export {
+  doAuth,
+  getChartCandle,
+  getChartLine,
+  getMe,
+  getPossibleCurrencies,
+  save,
+  getCryptoLive,
+};
