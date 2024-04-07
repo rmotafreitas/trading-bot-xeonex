@@ -118,9 +118,7 @@ const save = async (data: User): Promise<boolean> => {
     const res = await api.put("/auth/me", {
       risk: data.risk,
       balanceAvailable: data.balanceAvailable.toString(),
-      currency: allCurrencies.find(
-        (currency) => currency.name === data.currency
-      )?.token,
+      currency: "USDT",
     });
 
     if (res.status !== 200) {

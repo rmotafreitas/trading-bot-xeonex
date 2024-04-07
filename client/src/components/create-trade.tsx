@@ -395,7 +395,13 @@ function TimeBtn({
       } ${isOnTheMiddle ? "rounded-none" : ""}`}
       onClick={() => setSelectedTime(time)}
     >
-      {text}
+      <Label
+        className={`text-base 
+        ${selectedTime === time ? "text-white" : "text-primary"}
+      `}
+      >
+        {text}
+      </Label>
     </Button>
   );
 }

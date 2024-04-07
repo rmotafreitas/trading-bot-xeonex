@@ -12,7 +12,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
