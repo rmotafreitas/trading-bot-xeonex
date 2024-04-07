@@ -11,6 +11,7 @@ import { getCryptoLive, TypeCryptoLive, usdtToCrypto } from "@/lib/api";
 import { TradeTable } from "./trades-logs.table";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
+import { LoaderIcon } from "lucide-react";
 
 export function TradePage() {
   const { tradeId } = useParams<TradeParams>();
@@ -124,7 +125,17 @@ export function TradePage() {
     },
   };
 
-  if (!data.trade_logs) return <div>Loading...</div>;
+  if (!data.trade_logs)
+    return (
+      <div className="flex flex-col gap-6 min-h-screen min-w-full">
+        <Navbar />
+        <div className="w-full bg-inherit bg-no-repeat bg-cover min-h-96 justify-center items-center flex flex-col">
+          <h1 className="bg-clip-text text-transparent font-bold text-7xl bg-gradient-to-r from-[#5350F6] to-[#E662FE] mt-20 text-center">
+            <LoaderIcon className="w-10 h-10 animate-spin mx-auto text-primary" />
+          </h1>
+        </div>
+      </div>
+    );
   return (
     <div className="flex flex-col gap-6 min-h-screen min-w-full">
       <Navbar />

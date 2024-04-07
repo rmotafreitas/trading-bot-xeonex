@@ -27,7 +27,7 @@ export function Navbar() {
         <li className="text-lg font-semibold">
           <Button>
             <Link to={isLogged ? "/me" : "/auth"}>
-              {isLogged ? "Profile" : "Login"}
+              {isLogged ? "My Space" : "Login"}
             </Link>
           </Button>
         </li>
