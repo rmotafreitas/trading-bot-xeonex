@@ -64,6 +64,9 @@ public class User implements UserDetails {
     @Column(name = "role")
     private UserRole role;
 
+    @Column(name = "img")
+    private String img;
+
     public User(String login, String password, UserRole role, Currency currency) {
         this.login = login;
         this.password = password;
@@ -72,6 +75,7 @@ public class User implements UserDetails {
         this.balanceAvailable = new BigDecimal(defaultMoney);
         this.risk = new Risk(5);
         this.currency = currency;
+        this.img = "";
     }
 
 

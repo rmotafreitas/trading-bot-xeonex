@@ -16,7 +16,7 @@ public class UserMapper {
 
                 tradeController.calculateLucroByUser(user) ,
 
-                user.getRisk().getRiskLevel() , user.getCurrency() );
+                user.getRisk().getRiskLevel() , user.getCurrency(), user.getImg() );
     }
 
 

@@ -54,7 +54,7 @@ public class SecurityConfiguration {
                     authorize.requestMatchers(HttpMethod.POST ,"/product").hasRole("ADMIN");
                     authorize.requestMatchers(HttpMethod.GET ,"/product/{id}").hasRole("PSICO");
                     */
-                    authorize.anyRequest().authenticated();
+                    authorize.anyRequest().permitAll();
                 }
 
                 )

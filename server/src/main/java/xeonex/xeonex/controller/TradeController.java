@@ -285,6 +285,35 @@ public class TradeController {
 
     }
 
+    @GetMapping("/{trade_id}")
+    public ResponseEntity getTradeInfoEndPoint(@RequestHeader("Authorization") String bearerToken, @PathVariable String trade_id) {
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User user = (User) userRepository.findByLogin(userLogin);
+        Optional<Trade> optionalTrade = tradeRepository.findById(trade_id);
+        if (!optionalTrade.isPresent()) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Invalid trade id\"}");
+        }
+
+        Trade trade = optionalTrade.get();
+
+        if (!trade.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Unauthorized\"}");
+        }
+
+        Map<String, Object> tradeData = buildMapForTrade(trade);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            String json = objectMapper.writeValueAsString(tradeData);
+            return ResponseEntity.ok().body(json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao converter para JSON");
+        }
+    }
+
     public   Map<String, Object> buildMapForTrade(Trade trade){
         Map<String, Object> tradeData = new LinkedHashMap<>();
 
@@ -309,13 +338,12 @@ public class TradeController {
             long timestamp = date.toEpochSecond(ZoneOffset.UTC);
             tradeLogsMap.put("date", timestamp);
             tradeLogsMap.put("action", tradeLog.getAction());
+            tradeLogsMap.put("msg", tradeLog.getExplanation());
             tradeLogsMap.put("value", new BigDecimal( Double.parseDouble(tradeLog.getValue())));
             tradeLogsList.add(tradeLogsMap);
         }
-
         tradeData.put("trade_logs", tradeLogsList);
-
-
+        tradeData.put("trade_csv", Utils.makeCsvFileFromJson(tradeLogsList, trade.getId(), trade.getAsset()));
         return tradeData;
 
     }
