@@ -29,6 +29,7 @@ export type HistoryItemTradeEntry = {
   window_money: number;
   profit: number;
   trade_type: string;
+  is_open: boolean;
 };
 
 export const columns: ColumnDef<HistoryItemTradeEntry>[] = [
@@ -94,9 +95,17 @@ export const columns: ColumnDef<HistoryItemTradeEntry>[] = [
     header: "Window Money",
   },
   {
+    accessorKey: "is_open",
+    header: "Open",
+    cell: ({ row }) => {
+      const value: boolean = row.getValue("is_open");
+      return value ? "✅" : "❌";
+    },
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
-      const website = row.original;
+      const trade = row.original;
 
       return (
         <DropdownMenu>
@@ -112,7 +121,7 @@ export const columns: ColumnDef<HistoryItemTradeEntry>[] = [
             <DropdownMenuItem>
               <Link
                 className="w-full h-full flex items-center"
-                to={`/apps/websites/${website.id}`}
+                to={`/me/trade/${trade.trade_id}`}
               >
                 View
               </Link>

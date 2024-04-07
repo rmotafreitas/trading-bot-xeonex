@@ -51,12 +51,8 @@ export function TradesTable({ BTC, ETH }: TradeTableProps) {
         item.profit = Number(item.profit).toFixed(2);
         return {
           ...item,
-          valor_compra: Number(item.buy_value).toFixed(2),
-          valor_atual:
-            /* Number(item.actual_value).toFixed(2) */ item.trade_status ===
-            "Open"
-              ? Number(item.actual_value).toFixed(2)
-              : Number(item.profit).toFixed(2),
+          valor_compra: Number(+item.buy_value).toFixed(2),
+          valor_atual: Number(item.actual_value).toFixed(2),
           stop_loss: Number(item.stop_loss_value).toFixed(2),
           take_profit: Number(item.take_profit_value).toFixed(2),
           created_at: new Date(item.trade_logs[0].date * 1000)
@@ -68,6 +64,7 @@ export function TradesTable({ BTC, ETH }: TradeTableProps) {
               : item.window_money === "1d"
               ? "Long"
               : "Short",
+          is_open: item.trade_status === "Open",
         };
       });
       console.log(response.data);
