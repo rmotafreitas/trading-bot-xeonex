@@ -9,7 +9,11 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -87,5 +91,44 @@ public class Utils {
     public static List<String> getTradeStatus(){
         return List.of("Open", "Closed","Waiting","Cancelled");
     }
+
+    public static String makeCsvFileFromJson(List< Map<String,Object>>  json, String id,String type){
+
+
+
+
+        String directoryPath = "src/main/resources/static/";
+        String filename = directoryPath + id + ".csv";
+
+
+        File directory = new File(directoryPath);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+
+                writer.println("Date;Action;Message;Crypto Value" + type);
+
+
+                for (Map<String, Object> tradeLog : json) {
+                    String line = String.format("%s;%s;%s;%s",
+                            tradeLog.get("date").toString(),
+                            tradeLog.get("action").toString(),
+                            tradeLog.get("msg").toString()==null?"No bot message available":tradeLog.get("msg").toString(),
+                            ((BigDecimal) tradeLog.get("value")).toString()
+                    );
+                    writer.println(line);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        return filename.replace(directoryPath,"static/");
+        }
+
+
+
 }
 
