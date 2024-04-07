@@ -84,7 +84,7 @@ public class TradeController {
             String json = mapper.writeValueAsString(tradeData);
             json += getIndicatorInfo(dto.getAsset(), dto.getWindow_money(), user);
 
-            String response = gptService.get_answer_by_bot(json);
+            String response = gptService.get_answer_by_bot(json,true);
 
             if(response.contains("DO_NOTHING")){
                 return ResponseEntity.ok().body(response);

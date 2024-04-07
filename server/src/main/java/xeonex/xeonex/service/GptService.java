@@ -32,11 +32,14 @@ public class GptService {
     private String prompt_default = Utils.readFromFile("src/main/resources/prompt_default.txt");
 
 
-    public String get_answer_by_bot(String prt) {
+    public String get_answer_by_bot(String prt,boolean default_prompt) {
 
-
-
-         ChatgptRequest chatgptRequest = new ChatgptRequest(model, prompt_default.replace(" {$JSON_PROMPT}",prt));
+        ChatgptRequest chatgptRequest;
+        if(default_prompt){
+             chatgptRequest = new ChatgptRequest(model, prompt_default.replace(" {$JSON_PROMPT}",prt));
+        }else{
+             chatgptRequest = new ChatgptRequest(model, prt);
+        }
 
 
         HttpHeaders headers = new HttpHeaders();
