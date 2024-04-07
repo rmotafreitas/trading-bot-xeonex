@@ -6,20 +6,42 @@ import { ProfilePage } from "./pages/me/Profile";
 import { ThemeProvider } from "./components/theme-provider";
 import { NotFoundPage } from "./pages/NotFound";
 import { AuthProvider } from "./lib/hooks/useAuth";
+import { useMemo, useState } from "react";
+import { ErrorContext } from "./lib/contexts/error.context";
+import { SuccessContext } from "./lib/contexts/success.context";
+import { MessageDialog } from "./components/message-dialog";
 
 export function App() {
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const errorMessageProvider = useMemo(
+    () => ({ errorMessage, setErrorMessage }),
+    [errorMessage, setErrorMessage]
+  );
+
+  const successMessageProvider = useMemo(
+    () => ({ successMessage, setSuccessMessage }),
+    [successMessage, setSuccessMessage]
+  );
+
   return (
-    <AuthProvider>
-      <ThemeProvider defaultTheme="white" storageKey="vite-ui-theme">
-        <Router>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/auth" element={<LoginPage />} />
-            <Route path="/me" element={<ProfilePage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Router>
-      </ThemeProvider>
-    </AuthProvider>
+    <SuccessContext.Provider value={successMessageProvider}>
+      <ErrorContext.Provider value={errorMessageProvider}>
+        <AuthProvider>
+          <ThemeProvider defaultTheme="white" storageKey="vite-ui-theme">
+            <Router>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/auth" element={<LoginPage />} />
+                <Route path="/me" element={<ProfilePage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Router>
+          </ThemeProvider>
+        </AuthProvider>
+        <MessageDialog />
+      </ErrorContext.Provider>
+    </SuccessContext.Provider>
   );
 }

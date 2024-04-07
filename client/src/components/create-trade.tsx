@@ -1,4 +1,11 @@
 import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -6,16 +13,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { DialogClose } from "@radix-ui/react-dialog";
-import { Button } from "./ui/button";
-import { TypeCryptoLive, TypeCurrency } from "@/lib/api";
-import { AssetComponent } from "@/pages/me/Profile";
-import { Label } from "@radix-ui/react-dropdown-menu";
-import { Input } from "./ui/input";
+
+import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { User } from "@/lib/hooks/useAuth";
-import { useEffect, useState } from "react";
+import { TypeCryptoLive, TypeCurrency } from "@/lib/api";
 import api from "@/lib/api/api";
+import { User } from "@/lib/hooks/useAuth";
+import { AssetComponent } from "@/pages/me/Profile";
+import { DialogClose } from "@radix-ui/react-dialog";
+import { Label } from "@radix-ui/react-dropdown-menu";
+import { LoaderIcon } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { ErrorContext } from "@/lib/contexts/error.context";
+import { SuccessContext } from "@/lib/contexts/success.context";
+import { AxiosError } from "axios";
 
 interface CreateTradeProps {
   isOpen: boolean;
@@ -27,6 +40,14 @@ interface CreateTradeProps {
   user: User;
 }
 
+export type TradeOpenType = {
+  was_already_open: boolean;
+  decision: string;
+  position_type: string;
+  reason: string;
+  trade_id: string;
+};
+
 export function CreateTrade({
   isOpen,
   onClose,
@@ -36,6 +57,9 @@ export function CreateTrade({
   possibleCurrencies,
   user,
 }: CreateTradeProps) {
+  const { errorMessage, setErrorMessage } = useContext(ErrorContext);
+  const { successMessage, setSuccessMessage } = useContext(SuccessContext);
+
   const [selectedRisk, setSelectedRisk] = useState<number>(user.risk);
   const [selectedAmount, setSelectedAmount] = useState<number>(0);
   const [selectedActualAmount, setSelectedActualAmount] = useState<number>(0);
@@ -43,8 +67,12 @@ export function CreateTrade({
   const [selectedTakeProfit, setSelectedTakeProfit] = useState<number>(2);
   const [selectedStopLoss, setSelectedStopLoss] = useState<number>(2);
   const [selectedTime, setSelectedTime] = useState<"15m" | "4h" | "1d">("15m");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const [response, setResponse] = useState<TradeOpenType | null>(null);
 
   const handleSubmit = async () => {
+    setIsLoading(true);
     const body = {
       asset: selectedCrypto,
       spread:
@@ -58,10 +86,33 @@ export function CreateTrade({
       stopLoss: selectedStopLoss,
       window_money: selectedTime,
     };
-    console.log(body);
-    const res = await api.post("/trade/open", body);
-    console.log(res);
+    try {
+      const res = await api.post("/trade/open", body);
+      // Handle successful response
+    } catch (error: AxiosError | any) {
+      if (error.response && error.response.status === 400) {
+        // Handle 400 error
+        setErrorMessage(error.response.data.error);
+      } else {
+        // Handle other errors
+        console.error("An error occurred:", error.message);
+      }
+    } finally {
+      onClose();
+      setIsLoading(false);
+    }
+  };
+
+  const handleAccept = async () => {
+    const res = await api.post(`/trade/activate/${response?.trade_id}`);
     onClose();
+    setSuccessMessage("Trade created successfully");
+  };
+
+  const handleDecline = async () => {
+    const res = await api.post(`/trade/close/${response?.trade_id}`);
+    onClose();
+    setSuccessMessage("Trade declined successfully");
   };
 
   useEffect(() => {
@@ -234,6 +285,83 @@ export function CreateTrade({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={response !== null} onOpenChange={() => setResponse(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Are you absolutely sure?</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col flex-wrap justify-start items-start gap-3">
+            <Label className="text-lg font-bold">
+              What does the bot want to do?
+            </Label>
+            <Label className="text-lg font-base">{response?.decision}</Label>
+            <Separator />
+            {response?.decision !== "DO_NOTHING" ? (
+              <>
+                <Label className="text-lg font-bold">
+                  What type of trade is this?
+                </Label>
+                <Label className="text-lg font-base">
+                  {response?.position_type}
+                </Label>
+                <Separator />
+              </>
+            ) : (
+              <Label className="text-lg font-base">
+                Is recommended to change your parameters in the traded based on
+                the bot's decision
+              </Label>
+            )}
+            <Label className="text-lg font-bold">
+              What is the reason for this trade?
+            </Label>
+            <Label className="text-lg font-base">{response?.reason}</Label>
+          </div>
+          <DialogFooter className="sm:justify-end">
+            {response?.decision !== "DO_NOTHING" ? (
+              <>
+                <DialogClose>
+                  <Button
+                    onClick={handleDecline}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Decline
+                  </Button>
+                </DialogClose>
+                <DialogClose>
+                  <Button onClick={handleAccept} type="button">
+                    Accept
+                  </Button>
+                </DialogClose>
+              </>
+            ) : (
+              <DialogClose>
+                <Button onClick={handleDecline} type="button">
+                  Ok
+                </Button>
+              </DialogClose>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isLoading}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center w-full flex-1 flex-col justify-center items-center">
+              Loading
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center w-full flex-1 flex-col justify-center items-center">
+              <p className="text-center w-full flex-1 flex-col justify-center items-center my-4">
+                The bot is thinking about your trade, please be patient
+              </p>
+              <LoaderIcon className="w-10 h-10 animate-spin mx-auto" />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
