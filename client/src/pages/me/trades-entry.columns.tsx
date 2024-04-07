@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
-import { deleteRow } from "./trades-entry.table";
+import api from "@/lib/api/api";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -88,7 +88,17 @@ export const columns: ColumnDef<HistoryItemTradeEntry>[] = [
   },
   {
     accessorKey: "created_at",
-    header: "Created At",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
   },
   {
     accessorKey: "window_money",
@@ -96,7 +106,17 @@ export const columns: ColumnDef<HistoryItemTradeEntry>[] = [
   },
   {
     accessorKey: "is_open",
-    header: "Open",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Open
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
     cell: ({ row }) => {
       const value: boolean = row.getValue("is_open");
       return value ? "✅" : "❌";
@@ -129,7 +149,9 @@ export const columns: ColumnDef<HistoryItemTradeEntry>[] = [
             <DropdownMenuItem
               className="text-red-500 cursor-pointer"
               onClick={async () => {
-                // await deleteRow(website.id, "websites");
+                const trade_id = trade.trade_id;
+                const res = await api.post(`/trade/close/${trade_id}`);
+                window.location.reload();
               }}
             >
               Close

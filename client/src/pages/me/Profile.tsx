@@ -26,7 +26,7 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { Label } from "@radix-ui/react-dropdown-menu";
-import { CirclePlus, Wallet } from "lucide-react";
+import { Camera, CirclePlus, Wallet } from "lucide-react";
 
 import {
   Dialog,
@@ -44,12 +44,14 @@ import { DialogClose } from "@radix-ui/react-dialog";
 import { SuccessContext } from "@/lib/contexts/success.context";
 import { ErrorContext } from "@/lib/contexts/error.context";
 import { TradesTable } from "./trades-entry.table";
+import { useTheme } from "@/components/theme-provider";
+import api from "@/lib/api/api";
 
 export function ProfilePage() {
   const { successMessage, setSuccessMessage } = useContext(SuccessContext);
   const { errorMessage, setErrorMessage } = useContext(ErrorContext);
 
-  const { user, signOut, addAmount, update, save } = useAuth();
+  const { user, signOut, addAmount, update, save, withdrawAmount } = useAuth();
 
   const router = useNavigate();
 
@@ -77,6 +79,27 @@ export function ProfilePage() {
       currency: "USDT",
       risk: newRisk,
     });
+
+    if (photo) {
+      const formData = new FormData();
+      formData.append("img", photo);
+      const resImg = await api.post("/auth/me/photo", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      if (resImg) {
+        await update({
+          ...user,
+          urlImg: resImg.data.urlImg,
+        });
+        await save({
+          ...user,
+          urlImg: resImg.data.urlImg,
+        });
+      }
+    }
+
     if (!res) {
       setErrorMessage("Error saving data");
       return;
@@ -108,6 +131,15 @@ export function ProfilePage() {
     });
   };
 
+  const handleWithdrawAmount = () => {
+    withdrawAmount(selectedAmount).then((res) => {
+      if (!res) setErrorMessage("Error withdrawing amount");
+      setSelectedAmount(0);
+    });
+  };
+
+  const { theme } = useTheme();
+
   const candleChartConfig = {
     type: "candlestick",
     height: 300,
@@ -128,7 +160,7 @@ export function ProfilePage() {
       dataLabels: {
         enabled: false,
       },
-      colors: ["#fff"],
+      colors: ["#7C3AED"],
       stroke: {
         lineCap: "round",
         curve: "smooth",
@@ -146,7 +178,7 @@ export function ProfilePage() {
         },
         labels: {
           style: {
-            colors: "#fff",
+            colors: theme === "dark" ? "#fff" : "#616161",
             fontSize: "12px",
             fontFamily: "inherit",
             fontWeight: 400,
@@ -157,7 +189,7 @@ export function ProfilePage() {
       yaxis: {
         labels: {
           style: {
-            colors: "#fff",
+            colors: theme === "dark" ? "#fff" : "#616161",
             fontSize: "12px",
             fontFamily: "inherit",
             fontWeight: 400,
@@ -181,9 +213,7 @@ export function ProfilePage() {
       fill: {
         opacity: 0.8,
       },
-      tooltip: {
-        theme: "dark",
-      },
+      tooltip: {},
     },
   };
 
@@ -208,7 +238,7 @@ export function ProfilePage() {
       dataLabels: {
         enabled: false,
       },
-      colors: ["#fff"],
+      colors: ["#7C3AED"],
       stroke: {
         lineCap: "round",
         curve: "smooth",
@@ -226,7 +256,7 @@ export function ProfilePage() {
         },
         labels: {
           style: {
-            colors: "#616161",
+            colors: theme === "dark" ? "#fff" : "#616161",
             fontSize: "12px",
             fontFamily: "inherit",
             fontWeight: 400,
@@ -236,7 +266,7 @@ export function ProfilePage() {
       yaxis: {
         labels: {
           style: {
-            colors: "#616161",
+            colors: theme === "dark" ? "#fff" : "#616161",
             fontSize: "12px",
             fontFamily: "inherit",
             fontWeight: 400,
@@ -294,6 +324,8 @@ export function ProfilePage() {
     })();
   }, [router, selectedCrypto, selectedInterval, user, selectedCurrency]);
 
+  useEffect(() => {}, [user]);
+
   useEffect(() => {
     setInterval(() => {
       hydrate();
@@ -301,6 +333,8 @@ export function ProfilePage() {
   }, []);
 
   const [isTradeDialogOpen, setIsTradeDialogOpen] = useState(false);
+
+  const [photo, setPhoto] = useState<File | null>(null);
 
   if (user) {
     return (
@@ -406,11 +440,40 @@ export function ProfilePage() {
             <aside className="flex flex-col gap-6 justify-start items-start flex-wrap flex-1 max-w-sm max-sm:max-w-full">
               <div className="flex flex-col p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit w-full">
                 <div className="flex flex-row gap-3 justify-start items-center flex-wrap">
-                  <img
-                    className="w-20 h-20 aspect-square object-cover object-center rounded-full border-4 border-primary"
-                    src="user.png"
-                    alt=""
-                  />
+                  <div className="relative">
+                    <img
+                      className="w-20 h-20 aspect-square object-cover object-center rounded-full border-[3px] border-primary"
+                      src={
+                        photo || user?.urlImg === "user.png"
+                          ? URL.createObjectURL(photo)
+                          : api.defaults.baseURL + "/" + user?.urlImg ||
+                            "user.png"
+                      }
+                      alt=""
+                      onError={(e) => {
+                        e.currentTarget.src = "user.png";
+                      }}
+                    />
+                    <input
+                      type="file"
+                      id="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files) {
+                          setPhoto(e.target.files[0]);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <div
+                      onClick={() => {
+                        document.getElementById("file")?.click();
+                      }}
+                      className="absolute bottom-0 right-0 bg-muted border-primary rounded-full p-1 border-[3px]"
+                    >
+                      <Camera size={20} />
+                    </div>
+                  </div>
                   <p>{user?.login}</p>
                 </div>
                 <div className="flex flex-row justify-between gap-3 items-center flex-wrap">
@@ -548,11 +611,28 @@ export function ProfilePage() {
                           <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                               <Label className="text-left">Amount:</Label>
-                              <Input id="amount" className="col-span-3" />
+                              <Input
+                                type="number"
+                                min={0}
+                                max={100000}
+                                onChange={(e) =>
+                                  setSelectedAmount(+e.target.value)
+                                }
+                                value={selectedAmount}
+                                id="amount"
+                                className="col-span-3"
+                              />
                             </div>
                           </div>
                           <DialogFooter>
-                            <Button type="submit">Withdraw</Button>
+                            <DialogClose asChild>
+                              <Button
+                                onClick={handleWithdrawAmount}
+                                type="submit"
+                              >
+                                Withdraw
+                              </Button>
+                            </DialogClose>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
@@ -610,7 +690,7 @@ export function AssetComponent({
           }
           alt={`${cryptoName} logo`}
         />
-        <div className="flex flex-col gap-1 justify-between items-center h-fit">
+        <div className="flex flex-col flex-1 gap-1 justify-between items-center h-fit">
           <div className="flex flex-row gap-1 justify-between items-center w-full">
             <p className="text-base font-semibold">
               {cryptoName} (BTC-

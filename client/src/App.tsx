@@ -10,6 +10,11 @@ import { useMemo, useState } from "react";
 import { ErrorContext } from "./lib/contexts/error.context";
 import { SuccessContext } from "./lib/contexts/success.context";
 import { MessageDialog } from "./components/message-dialog";
+import { TradePage } from "./pages/me/trade";
+
+export type TradeParams = {
+  tradeId: string;
+};
 
 export function App() {
   const [errorMessage, setErrorMessage] = useState("");
@@ -35,6 +40,7 @@ export function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/auth" element={<LoginPage />} />
                 <Route path="/me" element={<ProfilePage />} />
+                <Route path="/me/trade/:tradeId" element={<TradePage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Router>

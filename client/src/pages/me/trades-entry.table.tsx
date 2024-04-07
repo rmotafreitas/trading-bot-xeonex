@@ -15,8 +15,6 @@ import { columns, HistoryItemTradeEntry } from "./trades-entry.columns";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { TypeCryptoLive, usdtToCrypto } from "@/lib/api";
 
-export const deleteRow = async (id: string) => {};
-
 interface TradeTableProps {
   BTC: TypeCryptoLive;
   ETH: TypeCryptoLive;
@@ -24,10 +22,9 @@ interface TradeTableProps {
 
 export function TradesTable({ BTC, ETH }: TradeTableProps) {
   const [data, setData] = useState<HistoryItemTradeEntry[]>([]);
-
   const { user } = useAuth();
 
-  useEffect(() => {
+  const hydrate = async () => {
     api.get("/trade/all").then((response) => {
       let aux = response.data;
       aux = aux.map((item: any) => {
@@ -55,9 +52,7 @@ export function TradesTable({ BTC, ETH }: TradeTableProps) {
           valor_atual: Number(item.actual_value).toFixed(2),
           stop_loss: Number(item.stop_loss_value).toFixed(2),
           take_profit: Number(item.take_profit_value).toFixed(2),
-          created_at: new Date(item.trade_logs[0].date * 1000)
-            .toLocaleString()
-            .split(",")[0],
+          created_at: new Date(item.trade_logs[0].date * 1000).toLocaleString(),
           window_money:
             item.window_money === "4h"
               ? "Medium"
@@ -71,15 +66,20 @@ export function TradesTable({ BTC, ETH }: TradeTableProps) {
       console.log(aux);
       setData(aux);
     });
+  };
+
+  useEffect(() => {
+    hydrate();
+    const interval = setInterval(() => {
+      hydrate();
+    }, 4000);
+    return () => clearInterval(interval);
   }, [user]);
 
   return (
     <div className="relative mt-8">
       <DataTable columns={columns} data={data} />
       <DropdownMenu>
-        <DropdownMenuTrigger className="absolute top-0 right-2">
-          <FilterIcon className="text-xl text-muted-foreground" />
-        </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuLabel>Filter</DropdownMenuLabel>
           <DropdownMenuSeparator />
