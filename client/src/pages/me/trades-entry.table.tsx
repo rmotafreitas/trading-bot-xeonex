@@ -57,8 +57,8 @@ export function TradesTable({ BTC, ETH }: TradeTableProps) {
             item.window_money === "4h"
               ? "Medium"
               : item.window_money === "1d"
-              ? "Long"
-              : "Short",
+              ? "Slow"
+              : "Fast",
           is_open: item.trade_status === "Open",
         };
       });

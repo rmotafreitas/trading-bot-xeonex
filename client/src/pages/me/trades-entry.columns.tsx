@@ -64,7 +64,9 @@ export const columns: ColumnDef<HistoryItemTradeEntry>[] = [
       const value: number = +row.getValue("profit");
       return (
         <div className="flex items-center gap-1">
-          <span className="ml-1">{value}</span>
+          <span className="ml-1">
+            {value} ({((value / row.original.valor_compra) * 100).toFixed(2)}%)
+          </span>
           <ArrowUpDown
             className={`h-4 w-4 ${
               value > 0 ? "text-green-500" : "text-red-500"
