@@ -11,7 +11,8 @@ public record UserMeDTO(
 
         BigDecimal lucro,
         Integer risk,
-        Currency currency
+        Currency currency,
+        String urlImg
 ) {
 
 

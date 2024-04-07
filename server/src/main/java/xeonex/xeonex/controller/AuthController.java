@@ -1,5 +1,8 @@
 package xeonex.xeonex.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 import xeonex.xeonex.Exception.TokenInvalidException;
 import xeonex.xeonex.Utils;
 import xeonex.xeonex.domain.User.*;
@@ -15,6 +18,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.math.BigDecimal;
 
 @RestController
@@ -77,6 +82,49 @@ public class AuthController {
             userRepository.findByLogin(userLogin);
             return ResponseEntity.ok( userMapper.toUserMeDTO((User) userRepository.findByLogin(userLogin)));
     }
+
+    @PostMapping("/me/photo")
+    public ResponseEntity register(@RequestHeader("Authorization") String bearerToken,@Valid HttpServletRequest request) {
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User u = (User) userRepository.findByLogin(userLogin);
+
+
+        try {
+            MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+
+            MultipartFile img =  multipartRequest.getFile("img");
+
+
+            String directory = "src/main/resources/static/img/" ;
+
+            File directoryFile = new File(directory);
+            if (!directoryFile.exists()) {
+                directoryFile.mkdirs();
+            }
+
+
+            String filePath = directory +  u.getId() + img.getOriginalFilename().substring(img.getOriginalFilename().lastIndexOf("."));
+
+
+            File file = new File(filePath);
+            file.createNewFile();
+
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(img.getBytes());
+            fos.close();
+
+            u.setImg(filePath.replace("src/main/resources/",""));
+            userRepository.save(u);
+
+            return ResponseEntity.ok().body(filePath.replace("src/main/resources/",""));
+
+        } catch (Exception e) {
+
+            return ResponseEntity.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).body("{\"error\": \"Internal Server Error\"}");
+        }
+    }
+
 
     @PutMapping("/me")
     public ResponseEntity<?> updateLoggedInUser(@RequestHeader("Authorization") String bearerToken,
