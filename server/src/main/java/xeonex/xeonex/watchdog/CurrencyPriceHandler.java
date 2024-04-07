@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jose4j.json.internal.json_simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ReactiveAdapterRegistry;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -44,10 +45,15 @@ public class CurrencyPriceHandler {
 
     private int counter = 0;
 
+    Map<String,BigDecimal> map;
+
     @Scheduled(fixedRate = 2000)
     public void handleCurrencyPrice() {
        counter+=1;
-        System.out.println(counter);
+
+
+        map = coinInfoController.getPrices();
+
         try{
             atualizarTrades();
         }catch (HttpClientErrorException e){
@@ -71,6 +77,7 @@ public class CurrencyPriceHandler {
             if(!t.getTradeStatus().equals("Open")){
                 continue;
             }
+
             botUpdateTrade(t);
             atualizaValorTrade(t);
 
@@ -173,6 +180,9 @@ public class CurrencyPriceHandler {
     public void decideByBot(String jsonString,Trade t) {
 
 
+        return;
+
+        /*
 
     try {
         LinkedHashMap<String,String> jsonObject = (LinkedHashMap<String, String>) new ObjectMapper().readValue(jsonString, Map.class);
@@ -180,6 +190,7 @@ public class CurrencyPriceHandler {
        String action = jsonObject.get("action").toString();
        String explanation = jsonObject.get("explanation").toString();
 
+        System.out.println("Action: " + action);
 
         if (action.equals("CHANGE")) {
             t.setTradeStatus("Close");
@@ -210,6 +221,8 @@ public class CurrencyPriceHandler {
         e.printStackTrace();
     }
 
+         */
+
 
 
 
@@ -238,8 +251,14 @@ public class CurrencyPriceHandler {
 
 
     private void atualizaValorTrade(Trade t){
+
+
             String pair = t.getAsset() + "-" + t.getUser().getCurrency().getCurrency();
-            BigDecimal currentPrice = new BigDecimal(coinInfoController.getAssetPrice(pair));
+
+
+            BigDecimal currentPrice =  map.get(pair);
+
+
             BigDecimal newSaldo =  t.getQuantityAsset().multiply(currentPrice, MathContext.DECIMAL32);
             t.setCurrentBalance(newSaldo);
             int scale = Math.max(

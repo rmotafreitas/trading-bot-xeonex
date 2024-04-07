@@ -12,6 +12,5 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Setter
 public class WithdrawDTO {
-
     BigDecimal ammount;
 }
