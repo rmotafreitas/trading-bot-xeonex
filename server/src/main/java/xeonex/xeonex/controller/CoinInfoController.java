@@ -21,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import xeonex.xeonex.service.CryptoCurrencyService;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +39,8 @@ public class CoinInfoController {
     @Value("${uphold.api.url.price}")
     private String UPHOLD_API_URL_PRICE;
 
+    @Value("${binance.api.bidprice}")
+    private String BINANCE_API_URL_BIDPRICE;
     @Autowired
     private BinanceService binanceService;
 
@@ -50,6 +53,25 @@ public class CoinInfoController {
 
     @Autowired
     private TokenService tokenService;
+
+    public double getAssetPrice(String asset) {
+
+        String jsonResponse = coinPrice(asset);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = null;
+        try {
+            jsonNode = objectMapper.readTree(jsonResponse);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        double ask = jsonNode.get("bid").asDouble();
+
+        return ask;
+    }
+
 
     @GetMapping("/currency")
     public ResponseEntity<List<CurrencyDTO>> getCurrency() {
@@ -80,6 +102,21 @@ public class CoinInfoController {
 
 
 
+    }
+    public String coinPriceBinance(String pair) {
+
+        String url = BINANCE_API_URL_BIDPRICE + "?symbol=" + pair;
+        String body = restTemplate.getForEntity(url, String.class).getBody();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = null;
+        try {
+            jsonNode = objectMapper.readTree(body);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return jsonNode.toString();
     }
 
     public String coinPrice(String pair) {

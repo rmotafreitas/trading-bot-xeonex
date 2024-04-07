@@ -59,10 +59,16 @@ public class Trade {
     @Column(name = "date")
     private LocalDateTime date;
 
-    @Column(name = "quantity_asset")
+    @Column(name = "quantity_asset", precision = 10, scale = 10)
     private BigDecimal quantityAsset;
 
-    public Trade(BigDecimal initialInvestment, String asset, BigDecimal currentBalance, Risk risk, BigDecimal takeProfit, BigDecimal stopLoss, String tradeType, String tradeStatus, User user,BigDecimal quantityAsset) {
+    @Column(name = "window_money")
+    private String windowMoney;
+
+    @Column(name = "value_without_spread")
+    private BigDecimal valueWithoutSpread;
+
+    public Trade(BigDecimal initialInvestment, String asset, BigDecimal currentBalance, Risk risk, BigDecimal takeProfit, BigDecimal stopLoss, String tradeType, String tradeStatus, User user,BigDecimal quantityAsset,String windowMoney,BigDecimal valueWithoutSpread) {
         this.initialInvestment = initialInvestment;
         this.asset = asset;
         this.currentBalance = currentBalance;
@@ -74,6 +80,8 @@ public class Trade {
         this.user = user;
         this.date = LocalDateTime.now();
         this.quantityAsset = quantityAsset;
+        this.windowMoney = windowMoney;
+        this.valueWithoutSpread = valueWithoutSpread;
     }
 
     //Penso rápido : eu devia usar ASPECT, mas não estou a conseguir e não vou perder mais tempo, vou fazer assim
@@ -82,4 +90,5 @@ public class Trade {
 
         TradeStatus = tradeStatus;
     }
+
 }

@@ -29,10 +29,14 @@ public class TradeLog {
     @Column(name = "action")
     private String action;
 
-    public TradeLog(Trade trade, String action) {
+    @Column(name = "current_value")
+    private String value;
+
+    public TradeLog(Trade trade, String action,String value) {
         this.trade = trade;
         this.action = action;
         this.date = LocalDateTime.now();
+        this.value = value;
     }
 
 

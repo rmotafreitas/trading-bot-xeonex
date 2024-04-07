@@ -3,13 +3,11 @@ package xeonex.xeonex.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import xeonex.xeonex.Utils;
-import xeonex.xeonex.domain.Trade.Trade;
-import xeonex.xeonex.domain.Trade.TradeAspect;
-import xeonex.xeonex.domain.Trade.TradeLog;
-import xeonex.xeonex.domain.Trade.TradeReceiveDTO;
+import xeonex.xeonex.domain.Trade.*;
 import xeonex.xeonex.domain.User.Risk;
 import xeonex.xeonex.domain.User.User;
 import xeonex.xeonex.domain.User.UserUpdateRequestDTO;
@@ -21,9 +19,9 @@ import xeonex.xeonex.service.GptService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
 
 @RestController
 @RequestMapping("/trade")
@@ -94,6 +92,30 @@ public class TradeController {
             String tradeType = response.contains("SHORT") ? "SHORT" : "LONG";
 
             BigDecimal currentBalance = dto.getInitialInvestment().add(dto.getInitialInvestment().multiply(dto.getSpread()).divide(new BigDecimal(100)));
+
+            BigDecimal assetPrice = dto.getAssetprice();
+            BigDecimal initialInvestment = dto.getInitialInvestment();
+
+
+            int scale = Math.max(
+                    assetPrice.scale(),
+                    initialInvestment.scale()
+            );
+
+
+            BigDecimal result;
+
+
+            try {
+                result = initialInvestment.divide(assetPrice, scale, RoundingMode.UNNECESSARY);
+            } catch (ArithmeticException e) {
+
+                scale--;
+                result =   initialInvestment.divide(assetPrice, scale, RoundingMode.HALF_UP);
+            }
+
+
+
             Trade t = new Trade(
                     dto.getInitialInvestment(),
                     dto.getAsset(),
@@ -104,13 +126,16 @@ public class TradeController {
                     tradeType,
                     "Waiting",
                     user,
-                    dto.getAssetprice().divide(dto.getInitialInvestment(), RoundingMode.UNNECESSARY));
+                      result,
+                            dto.getWindow_money(),
+                    dto.getInitialInvestment().add(dto.getInitialInvestment().multiply(dto.getSpread().divide(new BigDecimal(100))))
+                    );
 
 
             tradeRepository.save(
             t
             );
-            tradeLogRepository.save(new TradeLog( t, "Created")); // deviar ser um serviço ou um watch dog
+            tradeLogRepository.save(new TradeLog( t, t.getTradeStatus(),t.getCurrentBalance().toString())); // deviar ser um serviço ou um watch dog
 
             int lastBraceIndex = response.lastIndexOf("}");
             String tradeId = "\"trade_id\": \"" + t.getId() + "\"";
@@ -143,9 +168,137 @@ public class TradeController {
     }
 
 
+    @Autowired
+    private TradeAspect tradeAspect;
+    @PostMapping("/close/{trade_id}")
+    public ResponseEntity closeTradeEndPoint(@RequestHeader("Authorization") String bearerToken, @PathVariable String trade_id) {
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User user = (User) userRepository.findByLogin(userLogin);
+
+        Optional<Trade> optionalTrade = tradeRepository.findById(trade_id);
+        if (!optionalTrade.isPresent()) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Invalid trade id\"}");
+        }
+
+        Trade trade = optionalTrade.get();
+
+        if (!trade.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Unauthorized\"}");
+        }
 
 
+        if(trade.getTradeStatus().equals("Waiting")){
+            tradeAspect.setTradeStatus(trade, "Cancelled");
+        }else{
+            tradeAspect.setTradeStatus(trade, "Closed");
+        }
+
+        tradeRepository.save(trade);
+
+        user.setBalanceInvested(user.getBalanceInvested().subtract(trade.getCurrentBalance()));
+        user.setBalanceAvailable(user.getBalanceAvailable().add(trade.getCurrentBalance()));
+
+        userRepository.save(user);
+        return ResponseEntity.ok().body("{\"message\": \"Trade closed/cancelled\"}");
+    }
 
 
+    @PostMapping("/activate/{trade_id}")
+    public ResponseEntity activateTradeEndPoint(@RequestHeader("Authorization") String bearerToken, @PathVariable String trade_id) {
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User user = (User) userRepository.findByLogin(userLogin);
+
+        Optional<Trade> optionalTrade = tradeRepository.findById(trade_id);
+        if (!optionalTrade.isPresent()) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Invalid trade id\"}");
+        }
+
+        Trade trade = optionalTrade.get();
+
+        if (!trade.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Unauthorized\"}");
+        }
+
+        if(user.getBalanceAvailable().compareTo(trade.getInitialInvestment()) < 0){
+            return ResponseEntity.badRequest().body("{\"error\": \"Insufficient funds\"}");
+        }else{
+            user.setBalanceAvailable(user.getBalanceAvailable().subtract(trade.getValueWithoutSpread() ));
+            user.setBalanceInvested(user.getBalanceInvested().add(trade.getInitialInvestment()));
+            userRepository.save(user);
+
+            System.out.println(user);
+        }
+
+        if(trade.getTradeStatus().equals("Waiting")){
+            tradeAspect.setTradeStatus(trade, "Open");
+            tradeRepository.save(trade);
+            return ResponseEntity.ok().body("{\"message\": \"Trade activated\"}");
+        }else{
+            return ResponseEntity.badRequest().body("{\"error\": \"Invalid trade status\"}");
+        }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity getTradeInfoEndPoint(@RequestHeader("Authorization") String bearerToken) {
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User user = (User) userRepository.findByLogin(userLogin);
+        List<Trade> trades = tradeRepository.findByUserOrderById(user);
+
+        List<Map<String, Object> > tradesData = new ArrayList<>();
+        for (Trade trade : trades) {
+            tradesData.add( buildMapForTrade(trade));
+        }
+
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            String json = objectMapper.writeValueAsString(tradesData);
+            return ResponseEntity.ok().body(json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao converter para JSON");
+        }
+
+
+    }
+
+    public   Map<String, Object> buildMapForTrade(Trade trade){
+        Map<String, Object> tradeData = new LinkedHashMap<>();
+
+        tradeData.put("trade_id", trade.getId());
+        tradeData.put("asset", trade.getAsset());
+        tradeData.put("buy_value", trade.getInitialInvestment());
+        tradeData.put("actual_value", trade.getCurrentBalance());
+        tradeData.put("risk", trade.getRisk().getRiskLevel());
+        tradeData.put("window_money", trade.getWindowMoney());
+        tradeData.put("take_profit_percentage", trade.getTakeProfit());
+        tradeData.put("stop_loss_percentage", trade.getStopLoss());
+        tradeData.put("take_profit_value", trade.getInitialInvestment().add(trade.getInitialInvestment().multiply(trade.getTakeProfit().divide(new BigDecimal(100)))));
+        tradeData.put("stop_loss_value", trade.getInitialInvestment().subtract(trade.getInitialInvestment().multiply(trade.getStopLoss().divide(new BigDecimal(100)))));
+        tradeData.put("trade_type", trade.getTradeType());
+        tradeData.put("trade_status", trade.getTradeStatus());
+        List<TradeLog> tradeLogs = tradeLogRepository.findByTradeOrderByDateAsc(trade);
+
+       List< Map<String,Object>> tradeLogsList= new ArrayList<>();
+        for (TradeLog tradeLog : tradeLogs) {
+            Map<String, Object> tradeLogsMap = new LinkedHashMap<>();
+            LocalDateTime date = tradeLog.getDate();
+            long timestamp = date.toEpochSecond(ZoneOffset.UTC);
+            tradeLogsMap.put("date", timestamp);
+            tradeLogsMap.put("action", tradeLog.getAction());
+            tradeLogsMap.put("value", new BigDecimal( Double.parseDouble(tradeLog.getValue())));
+            tradeLogsList.add(tradeLogsMap);
+        }
+
+        tradeData.put("trade_logs", tradeLogsList);
+
+
+        return tradeData;
+
+    }
 
 }

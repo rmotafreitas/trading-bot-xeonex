@@ -85,7 +85,7 @@ public class Utils {
     }
 
     public static List<String> getTradeStatus(){
-        return List.of("OPEN", "CLOSED","WAITING","CANCELLED");
+        return List.of("Open", "Closed","Waiting","Cancelled");
     }
 }
 
