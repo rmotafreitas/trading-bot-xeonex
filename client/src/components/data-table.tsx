@@ -26,7 +26,7 @@ import { Button } from "./ui/button";
 import { useState } from "react";
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[] | any[];
+  columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
@@ -54,18 +54,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter results..."
-          value={
-            (table.getColumn("resultText")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("resultText")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>

@@ -142,6 +142,10 @@ export type TypeCryptoLive = {
   day_percent_change: number;
 };
 
+function usdtToCrypto(usdt: number, crypto: TypeCryptoLive): number {
+  return usdt / crypto.ask;
+}
+
 const getCryptoLive = async (
   coin: "BTC" | "ETH"
 ): Promise<TypeCryptoLive | null> => {
@@ -178,4 +182,5 @@ export {
   getPossibleCurrencies,
   save,
   getCryptoLive,
+  usdtToCrypto,
 };

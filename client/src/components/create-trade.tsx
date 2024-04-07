@@ -88,6 +88,7 @@ export function CreateTrade({
     };
     try {
       const res = await api.post("/trade/open", body);
+      setResponse(res.data);
       // Handle successful response
     } catch (error: AxiosError | any) {
       if (error.response && error.response.status === 400) {

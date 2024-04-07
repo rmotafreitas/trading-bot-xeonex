@@ -43,6 +43,7 @@ import { Button } from "@/components/ui/button";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { SuccessContext } from "@/lib/contexts/success.context";
 import { ErrorContext } from "@/lib/contexts/error.context";
+import { TradesTable } from "./trades-entry.table";
 
 export function ProfilePage() {
   const { successMessage, setSuccessMessage } = useContext(SuccessContext);
@@ -377,6 +378,13 @@ export function ProfilePage() {
                   <CirclePlus />
                 </Button>
               </div>
+              {BTC &&
+                ETH &&
+                selectedCurrency &&
+                user &&
+                possibleCurrencies.length > 0 && (
+                  <TradesTable BTC={BTC} ETH={ETH} />
+                )}
             </div>
             {BTC &&
               ETH &&
