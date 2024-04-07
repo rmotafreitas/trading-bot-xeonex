@@ -3,13 +3,11 @@ import { Navbar } from "@/components/navbar";
 
 import {
   AlertDialog,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -36,7 +34,7 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { Label } from "@radix-ui/react-dropdown-menu";
-import { Wallet } from "lucide-react";
+import { CirclePlus, Wallet } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -55,6 +53,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+import { CreateTrade } from "@/components/create-trade";
 import { Button } from "@/components/ui/button";
 import { DialogClose } from "@radix-ui/react-dialog";
 
@@ -72,7 +71,7 @@ export function ProfilePage() {
     if (!user) {
       return;
     }
-    const newCurrency = possibleCurriencies.find(
+    const newCurrency = possibleCurrencies.find(
       (currency) => currency.name === selectedCurrency
     )?.token;
     if (!newCurrency) {
@@ -102,7 +101,7 @@ export function ProfilePage() {
     []
   );
 
-  const [possibleCurriencies, setPossibleCurrencies] = useState<TypeCurrency[]>(
+  const [possibleCurrencies, setPossibleCurrencies] = useState<TypeCurrency[]>(
     []
   );
 
@@ -300,17 +299,19 @@ export function ProfilePage() {
 
   useEffect(() => {
     setSelectedCurrency(user?.currency);
-    setInterval(() => {
-      hydrate();
-    }, 2500);
-  }, [hydrate, router, selectedCrypto, selectedInterval, user]);
+  }, [router, selectedCrypto, selectedInterval, user]);
 
   useEffect(() => {
     (async () => {
       const data = await getPossibleCurrencies();
       setPossibleCurrencies(data);
     })();
+    setInterval(() => {
+      hydrate();
+    }, 2500);
   }, []);
+
+  const [isTradeDialogOpen, setIsTradeDialogOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -320,7 +321,7 @@ export function ProfilePage() {
           <p>My Profile</p>
         </h1>
         <div className="w-full flex flex-row gap-10 max-sm:flex-col">
-          <section className="flex-1 flex flex-col justify-start items-start">
+          <section className="flex-1 flex flex-col justify-start items-start gap-4">
             <div className="w-full bg-muted rounded-md overflow-hidden h-fit p-4 flex flex-col justify-start">
               <div className="flex flex-row gap-4 justify-between items-center flex-wrap w-full">
                 <p className="text-2xl font-bold">Markets</p>
@@ -374,6 +375,36 @@ export function ProfilePage() {
                 <Chart {...lineChartConfig} />
               )}
             </div>
+
+            <div className="w-full bg-muted rounded-md overflow-hidden h-fit p-4 flex flex-col justify-start">
+              <div className="flex flex-row gap-4 justify-between items-center flex-wrap w-full">
+                <p className="text-2xl font-bold">Trades</p>
+                <Button
+                  onClick={() => setIsTradeDialogOpen(true)}
+                  className="px-2 flex flex-row gap-2 flex-wrap justify-center items-center h-max"
+                >
+                  <span className="flex flex-col justify-center items-center text-center">
+                    Create trade
+                  </span>
+                  <CirclePlus />
+                </Button>
+              </div>
+            </div>
+            {BTC &&
+              ETH &&
+              selectedCurrency &&
+              user &&
+              possibleCurrencies.length > 0 && (
+                <CreateTrade
+                  isOpen={isTradeDialogOpen}
+                  onClose={() => setIsTradeDialogOpen(false)}
+                  BTC={BTC}
+                  ETH={ETH}
+                  selectedCurrency={selectedCurrency}
+                  possibleCurrencies={possibleCurrencies}
+                  user={user}
+                />
+              )}
           </section>
           <aside className="flex flex-col gap-6 justify-start items-start flex-wrap flex-1 max-w-xs max-sm:max-w-full">
             <div className="flex flex-col p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit w-full">
@@ -409,14 +440,14 @@ export function ProfilePage() {
                   <DropdownMenuTrigger className="flex-1 text-left">
                     {selectedCurrency} (
                     {
-                      possibleCurriencies.find(
+                      possibleCurrencies.find(
                         (currency) => currency.name === selectedCurrency
                       )?.token
                     }
                     )
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    {possibleCurriencies.map((currency: TypeCurrency) => (
+                    {possibleCurrencies.map((currency: TypeCurrency) => (
                       <DropdownMenuItem
                         key={currency.token}
                         onClick={() => {
@@ -453,7 +484,7 @@ export function ProfilePage() {
                     <p>
                       {user?.balanceInvested} (
                       {
-                        possibleCurriencies.find(
+                        possibleCurrencies.find(
                           (currency) => currency.name === user?.currency
                         )?.token
                       }
@@ -470,7 +501,7 @@ export function ProfilePage() {
                     <p>
                       {user?.balanceAvailable} (
                       {
-                        possibleCurriencies.find(
+                        possibleCurrencies.find(
                           (currency) => currency.name === user?.currency
                         )?.token
                       }
@@ -486,7 +517,7 @@ export function ProfilePage() {
                     <span>
                       {user?.balanceTotal} (
                       {
-                        possibleCurriencies.find(
+                        possibleCurrencies.find(
                           (currency) => currency.name === user?.currency
                         )?.token
                       }
@@ -507,9 +538,7 @@ export function ProfilePage() {
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="amount" className="text-left">
-                              Amount:
-                            </Label>
+                            <Label className="text-left">Amount:</Label>
                             <Input
                               type="number"
                               min={0}
@@ -544,9 +573,7 @@ export function ProfilePage() {
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="amount" className="text-left">
-                              Amount:
-                            </Label>
+                            <Label className="text-left">Amount:</Label>
                             <Input id="amount" className="col-span-3" />
                           </div>
                         </div>
@@ -559,90 +586,22 @@ export function ProfilePage() {
                 </div>
               </div>
               <div className="flex flex-col gap-4 justify-start items-start flex-wrap w-full">
-                {BTC && (
-                  <div className="flex flex-col w-full p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit">
-                    <div className="flex flex-row gap-3 justify-start items-start text-xl font-bold flex-wrap">
-                      <img
-                        className="w-14 h-14 rounded-full object-cover object-center overflow-hidden"
-                        src="btc.png"
-                        alt="Bitcon logo"
-                      />
-                      <div className="flex flex-col gap-1 justify-between items-center h-fit">
-                        <div className="flex flex-row gap-1 justify-between items-center w-full">
-                          <p className="text-base font-semibold">
-                            Bitcoin (BTC-
-                            {
-                              possibleCurriencies.find(
-                                (currency) => currency.name === selectedCurrency
-                              )?.token
-                            }
-                            )
-                          </p>
-                          <p className="text-base font-light opacity-70">
-                            {Number(BTC.ask).toFixed(2)}
-                          </p>
-                        </div>
-                        <div className="flex flex-row gap-1 justify-between items-center w-full">
-                          <p className="text-sm font-light opacity-70">
-                            Spread: {Number(BTC.spread_percentage).toFixed(2)}%
-                          </p>
-                          <p
-                            className={`text-sm font-light opacity-70 ${
-                              BTC.day_percent_change > 0
-                                ? "text-green-500"
-                                : "text-red-500"
-                            }`}
-                          >
-                            Day change:{" "}
-                            {Number(BTC.day_percent_change).toFixed(2)}%
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {BTC && selectedCurrency && (
+                  <AssetComponent
+                    crypto={BTC}
+                    selectedCurrency={selectedCurrency}
+                    possibleCurrencies={possibleCurrencies}
+                    cryptoName="Bitcoin"
+                  />
                 )}
 
-                {ETH && (
-                  <div className="flex flex-col w-full p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit">
-                    <div className="flex flex-row gap-3 justify-start items-start text-xl font-bold flex-wrap">
-                      <img
-                        className="w-14 h-14 rounded-full object-cover object-center overflow-hidden"
-                        src="eth.png"
-                        alt="Ethereum logo"
-                      />
-                      <div className="flex flex-col gap-1 justify-between items-center h-fit">
-                        <div className="flex flex-row gap-1 justify-between items-center w-full">
-                          <p className="text-base font-semibold">
-                            Ethereum (ETH-
-                            {
-                              possibleCurriencies.find(
-                                (currency) => currency.name === selectedCurrency
-                              )?.token
-                            }
-                            )
-                          </p>
-                          <p className="text-base font-light opacity-70">
-                            {Number(ETH.ask).toFixed(2)}
-                          </p>
-                        </div>
-                        <div className="flex flex-row gap-1 justify-between items-center w-full">
-                          <p className="text-sm font-light opacity-70">
-                            Spread: {Number(ETH.spread_percentage).toFixed(2)}%
-                          </p>
-                          <p
-                            className={`text-sm font-light opacity-70 ${
-                              ETH.day_percent_change > 0
-                                ? "text-green-500"
-                                : "text-red-500"
-                            }`}
-                          >
-                            Day change:{" "}
-                            {Number(ETH.day_percent_change).toFixed(2)}%
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {ETH && selectedCurrency && (
+                  <AssetComponent
+                    crypto={ETH}
+                    selectedCurrency={selectedCurrency}
+                    possibleCurrencies={possibleCurrencies}
+                    cryptoName="Ethereum"
+                  />
                 )}
               </div>
             </div>
@@ -660,6 +619,64 @@ export function ProfilePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+interface AssetComponentProps {
+  crypto: TypeCryptoLive;
+  selectedCurrency: string;
+  possibleCurrencies: TypeCurrency[];
+  cryptoName: string;
+}
+
+export function AssetComponent({
+  crypto,
+  selectedCurrency,
+  possibleCurrencies: possibleCurriencies,
+  cryptoName,
+}: AssetComponentProps) {
+  return (
+    <div className="flex flex-col w-full p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit">
+      <div className="flex flex-row gap-3 justify-start items-start text-xl font-bold flex-wrap">
+        <img
+          className="w-14 h-14 rounded-full object-cover object-center overflow-hidden"
+          src={
+            cryptoName.toLocaleLowerCase() === "bitcoin" ? "btc.png" : "eth.png"
+          }
+          alt={`${cryptoName} logo`}
+        />
+        <div className="flex flex-col gap-1 justify-between items-center h-fit">
+          <div className="flex flex-row gap-1 justify-between items-center w-full">
+            <p className="text-base font-semibold">
+              {cryptoName} (BTC-
+              {
+                possibleCurriencies.find(
+                  (currency) => currency.name === selectedCurrency
+                )?.token
+              }
+              )
+            </p>
+            <p className="text-base font-light opacity-70">
+              {Number(crypto.ask).toFixed(2)}
+            </p>
+          </div>
+          <div className="flex flex-row gap-1 justify-between items-center w-full">
+            <p className="text-sm font-light opacity-70">
+              Spread: {Number(crypto.spread_percentage).toFixed(2)}%
+            </p>
+            <p
+              className={`text-sm font-light opacity-70 ${
+                crypto.day_percent_change > 0
+                  ? "text-green-500"
+                  : "text-red-500"
+              }`}
+            >
+              Day change: {Number(crypto.day_percent_change).toFixed(2)}%
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
