@@ -247,7 +247,7 @@ public class TradeController {
             user.setBalanceInvested(user.getBalanceInvested().add(trade.getInitialInvestment()));
             userRepository.save(user);
 
-            System.out.println(user);
+
         }
 
         if(trade.getTradeStatus().equals("Waiting")){
