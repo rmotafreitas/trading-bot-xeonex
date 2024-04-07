@@ -180,9 +180,9 @@ public class CurrencyPriceHandler {
     public void decideByBot(String jsonString,Trade t) {
 
 
-        return;
 
-        /*
+
+
 
     try {
         LinkedHashMap<String,String> jsonObject = (LinkedHashMap<String, String>) new ObjectMapper().readValue(jsonString, Map.class);
@@ -221,7 +221,7 @@ public class CurrencyPriceHandler {
         e.printStackTrace();
     }
 
-         */
+
 
 
 
