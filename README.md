@@ -10,7 +10,7 @@
   <h3 align="center">Xeonex</h3>
 
   <p align="center">
-    Win money sitted in your sofa!
+    Win money sited in your sofa!
     <br />
     <a href="#"><strong>Explore the Xeonex »</strong></a>
     <br />
@@ -41,7 +41,7 @@
 
 ## About The Project
 
-[![Product Name Screen Shot](./client/public/screen.png)](#)
+
 
 This app was developed to participate in the [BubsByte 23/24 Hackathon](https://bugsbyte.org/) and it consists of an trading bot to make money on trades in BTC and ETH! 🌍
 
