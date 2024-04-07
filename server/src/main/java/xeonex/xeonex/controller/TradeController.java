@@ -1,6 +1,7 @@
 package xeonex.xeonex.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -80,11 +81,14 @@ public class TradeController {
 
         Map<String, Object> tradeData = prepareTradeData(dto, user);
         ObjectMapper mapper = new ObjectMapper();
+        JsonNode jsonNode = null;
         try {
             String json = mapper.writeValueAsString(tradeData);
             json += getIndicatorInfo(dto.getAsset(), dto.getWindow_money(), user);
 
             String response = gptService.get_answer_by_bot(json,true);
+
+             jsonNode = mapper.readTree(response);
 
             if(response.contains("DO_NOTHING")){
                 return ResponseEntity.ok().body(response);
@@ -135,7 +139,7 @@ public class TradeController {
             tradeRepository.save(
             t
             );
-            tradeLogRepository.save(new TradeLog( t, t.getTradeStatus(),t.getCurrentBalance().toString())); // deviar ser um serviço ou um watch dog
+            tradeLogRepository.save(new TradeLog( t, t.getTradeStatus(),t.getCurrentBalance().toString(),jsonNode.get("reason").toString())); // deviar ser um serviço ou um watch dog
 
             int lastBraceIndex = response.lastIndexOf("}");
             String tradeId = "\"trade_id\": \"" + t.getId() + "\"";

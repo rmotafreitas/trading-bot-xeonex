@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.jose4j.json.internal.json_simple.JSONObject;
 import xeonex.binance.model.BinanceMapper;
 import xeonex.binance.model.Candle;
 import xeonex.binance.model.Line;
@@ -21,11 +22,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import xeonex.xeonex.service.CryptoCurrencyService;
 
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -55,6 +54,45 @@ public class CoinInfoController {
     @Autowired
     private TokenService tokenService;
 
+
+    private final String url_btc_eth = "https://api.uphold.com/v0/ticker/USDT";
+
+
+    public Map<String, BigDecimal> getPrices() {
+        Map<String, BigDecimal> prices = new HashMap<>();
+
+        String pair1 = "BTC-USDT";
+        String pair2 = "ETH-USDT";
+
+        String responseBody = restTemplate.getForObject(url_btc_eth, String.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+            for (JsonNode node : jsonNode) {
+
+                if(node.get("pair").toString().replace("\"","").equals(pair1)) {
+                    prices.put(pair1, new BigDecimal(node.get("ask").asText()));
+                }
+                if(node.get("pair").toString().replace("\"","").equals(pair2)) {
+                    prices.put(pair2, new BigDecimal(node.get("ask").asText()));
+                }
+            }
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+
+
+        return prices;
+    }
+
+
+
+
+
     public double getAssetPrice(String asset) {
 
         String jsonResponse = coinPrice(asset);
@@ -72,6 +110,10 @@ public class CoinInfoController {
 
         return ask;
     }
+
+
+
+
 
 
     @GetMapping("/currency")
