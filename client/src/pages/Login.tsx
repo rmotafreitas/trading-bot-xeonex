@@ -23,9 +23,6 @@ export function LoginPage() {
       console.log(hankoCookie);
       signIn(hankoUser.email, hankoCookie);
       router("/me");
-    } else {
-      // reload with a query parameter to show an error message
-      router("/login?error=true");
     }
   };
 

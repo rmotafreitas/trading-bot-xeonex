@@ -18,51 +18,20 @@ import { deleteRow } from "./trades-entry.table";
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 export type HistoryItemTradeEntry = {
-  // id: string;
-  // websiteUrl: string;
-  // promptText: string;
-  // resultText: string;
-  // createdAt: string;
+  trade_id: string;
+  valor_compra: number;
+  valor_atual: number;
+  stop_loss: number;
+  take_profit: number;
+  risk: number;
+  created_at: string;
+  window_money: number;
 };
 
 export const columns: ColumnDef<HistoryItemTradeEntry>[] = [
   {
-    accessorKey: "websiteUrl",
-    header: "Url",
-  },
-  {
-    accessorKey: "promptText",
-    header: "Prompt",
-    cell: ({ row }) => {
-      const value: string = row.getValue("promptText");
-      return value.length > 50 ? value.slice(0, 50) + "..." : value;
-    },
-  },
-  {
-    accessorKey: "resultText",
-    header: "Result",
-    cell: ({ row }) => {
-      const value: string = row.getValue("resultText");
-      return value.length > 50 ? value.slice(0, 50) + "..." : value;
-    },
-  },
-  {
-    accessorKey: "createdAt",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const value: string = row.getValue("createdAt");
-      return new Date(value).toLocaleString();
-    },
+    accessorKey: "trade_id",
+    header: "Trade ID",
   },
   {
     id: "actions",
@@ -94,7 +63,7 @@ export const columns: ColumnDef<HistoryItemTradeEntry>[] = [
                 // await deleteRow(website.id, "websites");
               }}
             >
-              Delete
+              Close
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

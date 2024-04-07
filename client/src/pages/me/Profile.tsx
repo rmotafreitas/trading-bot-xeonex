@@ -1,14 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Navbar } from "@/components/navbar";
 
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
@@ -22,7 +14,7 @@ import {
   TypeCryptoLive,
   TypeCurrency,
 } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 
 import { Input } from "@/components/ui/input";
@@ -37,13 +29,6 @@ import { Label } from "@radix-ui/react-dropdown-menu";
 import { CirclePlus, Wallet } from "lucide-react";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -56,8 +41,14 @@ import {
 import { CreateTrade } from "@/components/create-trade";
 import { Button } from "@/components/ui/button";
 import { DialogClose } from "@radix-ui/react-dialog";
+import { SuccessContext } from "@/lib/contexts/success.context";
+import { ErrorContext } from "@/lib/contexts/error.context";
+import { TradesTable } from "./trades-entry.table";
 
 export function ProfilePage() {
+  const { successMessage, setSuccessMessage } = useContext(SuccessContext);
+  const { errorMessage, setErrorMessage } = useContext(ErrorContext);
+
   const { user, signOut, addAmount, update, save } = useAuth();
 
   const router = useNavigate();
@@ -71,28 +62,25 @@ export function ProfilePage() {
     if (!user) {
       return;
     }
-    const newCurrency = possibleCurrencies.find(
-      (currency) => currency.name === selectedCurrency
-    )?.token;
-    if (!newCurrency) {
-      setError("Invalid currency");
-      return;
-    }
     const newRisk = user.risk;
     if (newRisk < 5 || newRisk > 80) {
-      setError("Invalid risk percentage");
+      setErrorMessage("Invalid risk percentage");
       return;
     }
     await update({
       ...user,
-      currency: selectedCurrency || "USDT",
+      currency: "USDT",
       risk: newRisk,
     });
-    await save({
+    const res = await save({
       ...user,
-      currency: selectedCurrency || "USDT",
+      currency: "USDT",
       risk: newRisk,
     });
+    if (!res) {
+      setErrorMessage("Error saving data");
+      return;
+    }
     router("/me");
   };
 
@@ -112,11 +100,10 @@ export function ProfilePage() {
   const [selectedType, setSelectedType] = useState<"line" | "candle">("line"); // 'line' | 'candle'
   const [selectedCurrency, setSelectedCurrency] = useState(user?.currency);
 
-  const [error, setError] = useState("");
-
   const [selectedAmount, setSelectedAmount] = useState(0);
   const handleAddAmount = () => {
-    addAmount(selectedAmount).then(() => {
+    addAmount(selectedAmount).then((res) => {
+      if (!res) setErrorMessage("Error adding amount");
       setSelectedAmount(0);
     });
   };
@@ -283,10 +270,6 @@ export function ProfilePage() {
   const [ETH, setETH] = useState<TypeCryptoLive | null>(null);
 
   const hydrate = async () => {
-    const dataLine = await getChartLine(selectedCrypto, selectedInterval);
-    setChartDataLine(dataLine);
-    const dataCandle = await getChartCandle(selectedCrypto, selectedInterval);
-    setChartDataCandle(dataCandle);
     const dataBTC = await getCryptoLive("BTC");
     if (dataBTC) {
       setBTC(dataBTC);
@@ -298,17 +281,23 @@ export function ProfilePage() {
   };
 
   useEffect(() => {
+    hydrate();
     setSelectedCurrency(user?.currency);
-  }, [router, selectedCrypto, selectedInterval, user]);
-
-  useEffect(() => {
     (async () => {
       const data = await getPossibleCurrencies();
       setPossibleCurrencies(data);
+
+      const dataLine = await getChartLine(selectedCrypto, selectedInterval);
+      setChartDataLine(dataLine);
+      const dataCandle = await getChartCandle(selectedCrypto, selectedInterval);
+      setChartDataCandle(dataCandle);
     })();
+  }, [router, selectedCrypto, selectedInterval, user, selectedCurrency]);
+
+  useEffect(() => {
     setInterval(() => {
       hydrate();
-    }, 2500);
+    }, 30000);
   }, []);
 
   const [isTradeDialogOpen, setIsTradeDialogOpen] = useState(false);
@@ -389,6 +378,13 @@ export function ProfilePage() {
                   <CirclePlus />
                 </Button>
               </div>
+              {BTC &&
+                ETH &&
+                selectedCurrency &&
+                user &&
+                possibleCurrencies.length > 0 && (
+                  <TradesTable BTC={BTC} ETH={ETH} />
+                )}
             </div>
             {BTC &&
               ETH &&
@@ -406,7 +402,7 @@ export function ProfilePage() {
                 />
               )}
           </section>
-          <aside className="flex flex-col gap-6 justify-start items-start flex-wrap flex-1 max-w-xs max-sm:max-w-full">
+          <aside className="flex flex-col gap-6 justify-start items-start flex-wrap flex-1 max-w-sm max-sm:max-w-full">
             <div className="flex flex-col p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit w-full">
               <div className="flex flex-row gap-3 justify-start items-center flex-wrap">
                 <img
@@ -433,32 +429,6 @@ export function ProfilePage() {
                     }
                   }}
                 />
-              </div>
-              <div className="flex flex-row justify-between gap-3 items-center flex-wrap">
-                <Label className="w-fit font-semibold">Currency:</Label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex-1 text-left">
-                    {selectedCurrency} (
-                    {
-                      possibleCurrencies.find(
-                        (currency) => currency.name === selectedCurrency
-                      )?.token
-                    }
-                    )
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {possibleCurrencies.map((currency: TypeCurrency) => (
-                      <DropdownMenuItem
-                        key={currency.token}
-                        onClick={() => {
-                          setSelectedCurrency(currency.name);
-                        }}
-                      >
-                        {currency.name} ({currency.token})
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
               <div className="flex flex-row gap-3 justify-between items-center flex-wrap">
                 <Button
@@ -608,17 +578,6 @@ export function ProfilePage() {
           </aside>
         </div>
       </div>
-      <AlertDialog open={!!error}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Error</AlertDialogTitle>
-            <AlertDialogDescription>{error}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button onClick={() => setError("")}>Close</Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

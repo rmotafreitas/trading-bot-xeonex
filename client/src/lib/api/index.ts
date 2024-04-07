@@ -112,20 +112,25 @@ const getPossibleCurrencies = async (): Promise<TypeCurrency[]> => {
 };
 
 const save = async (data: User): Promise<boolean> => {
-  const allCurrencies = await getPossibleCurrencies();
+  try {
+    const allCurrencies = await getPossibleCurrencies();
 
-  const res = await api.put("/auth/me", {
-    risk: data.risk,
-    balanceAvailable: data.balanceAvailable.toString(),
-    currency: allCurrencies.find((currency) => currency.name === data.currency)
-      ?.token,
-  });
+    const res = await api.put("/auth/me", {
+      risk: data.risk,
+      balanceAvailable: data.balanceAvailable.toString(),
+      currency: allCurrencies.find(
+        (currency) => currency.name === data.currency
+      )?.token,
+    });
 
-  if (res.status !== 200) {
+    if (res.status !== 200) {
+      return false;
+    }
+
+    return true;
+  } catch (e) {
     return false;
   }
-
-  return true;
 };
 
 export type TypeCryptoLive = {
@@ -136,6 +141,10 @@ export type TypeCryptoLive = {
   spread_percentage: number;
   day_percent_change: number;
 };
+
+function usdtToCrypto(usdt: number, crypto: TypeCryptoLive): number {
+  return usdt / crypto.ask;
+}
 
 const getCryptoLive = async (
   coin: "BTC" | "ETH"
@@ -173,4 +182,5 @@ export {
   getPossibleCurrencies,
   save,
   getCryptoLive,
+  usdtToCrypto,
 };
