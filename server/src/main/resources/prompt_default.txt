@@ -32,7 +32,7 @@ You have to return a JSON with the decision you took and the reason for that dec
 {
     "was_already_open":{true_or_false if the position was already open before you took the decision},
     "decision":{here goes the decision you took, OPEN, CLOSE, DO_NOTHING},
-    "Position_type":{if the decision is OPEN you have to say if it is LONG or SHORT},
+    "position_type":{if the decision is OPEN you have to say if it is LONG or SHORT},
     "reason":{here goes the reason for the decision you took, please be specific}
 }
 
@@ -48,7 +48,7 @@ Remember that you only return the decision you took and the reason for that deci
 {
     "was_already_open":{true_or_false if the position was already open before you took the decision},
     "decision":{here goes the decision you took, OPEN, CLOSE, DO_NOTHING and if it is open you have to say if it is LONG or SHORT},
-    "Position_type":{if the decision is OPEN you have to say if it is LONG or SHORT},
+    "position_type":{if the decision is OPEN you have to say if it is LONG or SHORT},
     "reason":{here goes the reason for the decision you took, please be specific}
 }
 

@@ -21,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import xeonex.xeonex.service.CryptoCurrencyService;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -50,6 +51,25 @@ public class CoinInfoController {
 
     @Autowired
     private TokenService tokenService;
+
+    public double getAssetPrice(String asset) {
+
+        String jsonResponse = coinPrice(asset);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = null;
+        try {
+            jsonNode = objectMapper.readTree(jsonResponse);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        double ask = jsonNode.get("bid").asDouble();
+
+        return ask;
+    }
+
 
     @GetMapping("/currency")
     public ResponseEntity<List<CurrencyDTO>> getCurrency() {

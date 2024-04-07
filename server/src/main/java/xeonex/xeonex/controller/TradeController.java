@@ -24,6 +24,7 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/trade")
@@ -94,6 +95,30 @@ public class TradeController {
             String tradeType = response.contains("SHORT") ? "SHORT" : "LONG";
 
             BigDecimal currentBalance = dto.getInitialInvestment().add(dto.getInitialInvestment().multiply(dto.getSpread()).divide(new BigDecimal(100)));
+
+            BigDecimal assetPrice = dto.getAssetprice();
+            BigDecimal initialInvestment = dto.getInitialInvestment();
+
+
+            int scale = Math.max(
+                    assetPrice.scale(),
+                    initialInvestment.scale()
+            );
+
+
+            BigDecimal result;
+
+
+            try {
+                result = initialInvestment.divide(assetPrice, scale, RoundingMode.UNNECESSARY);
+            } catch (ArithmeticException e) {
+
+                scale--;
+                result =   initialInvestment.divide(assetPrice, scale, RoundingMode.HALF_UP);
+            }
+
+
+
             Trade t = new Trade(
                     dto.getInitialInvestment(),
                     dto.getAsset(),
@@ -104,13 +129,16 @@ public class TradeController {
                     tradeType,
                     "Waiting",
                     user,
-                    dto.getAssetprice().divide(dto.getInitialInvestment(), RoundingMode.UNNECESSARY));
+                      result,
+                            dto.getWindow_money(),
+                    dto.getInitialInvestment().add(dto.getInitialInvestment().multiply(dto.getSpread().divide(new BigDecimal(100))))
+                    );
 
 
             tradeRepository.save(
             t
             );
-            tradeLogRepository.save(new TradeLog( t, "Created")); // deviar ser um serviço ou um watch dog
+            tradeLogRepository.save(new TradeLog( t, t.getTradeStatus(),t.getCurrentBalance().toString())); // deviar ser um serviço ou um watch dog
 
             int lastBraceIndex = response.lastIndexOf("}");
             String tradeId = "\"trade_id\": \"" + t.getId() + "\"";
@@ -143,8 +171,77 @@ public class TradeController {
     }
 
 
+    @Autowired
+    private TradeAspect tradeAspect;
+    @PostMapping("/close/{trade_id}")
+    public ResponseEntity closeTradeEndPoint(@RequestHeader("Authorization") String bearerToken, @PathVariable String trade_id) {
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User user = (User) userRepository.findByLogin(userLogin);
+
+        Optional<Trade> optionalTrade = tradeRepository.findById(trade_id);
+        if (!optionalTrade.isPresent()) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Invalid trade id\"}");
+        }
+
+        Trade trade = optionalTrade.get();
+
+        if (!trade.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Unauthorized\"}");
+        }
 
 
+        if(trade.getTradeStatus().equals("Waiting")){
+            tradeAspect.setTradeStatus(trade, "Cancelled");
+        }else{
+            tradeAspect.setTradeStatus(trade, "Closed");
+        }
+
+        tradeRepository.save(trade);
+
+        user.setBalanceInvested(user.getBalanceInvested().subtract(trade.getCurrentBalance()));
+        user.setBalanceAvailable(user.getBalanceAvailable().add(trade.getCurrentBalance()));
+
+        userRepository.save(user);
+        return ResponseEntity.ok().body("{\"message\": \"Trade closed/cancelled\"}");
+    }
+
+
+    @PostMapping("/activate/{trade_id}")
+    public ResponseEntity activateTradeEndPoint(@RequestHeader("Authorization") String bearerToken, @PathVariable String trade_id) {
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User user = (User) userRepository.findByLogin(userLogin);
+
+        Optional<Trade> optionalTrade = tradeRepository.findById(trade_id);
+        if (!optionalTrade.isPresent()) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Invalid trade id\"}");
+        }
+
+        Trade trade = optionalTrade.get();
+
+        if (!trade.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Unauthorized\"}");
+        }
+
+        if(user.getBalanceAvailable().compareTo(trade.getInitialInvestment()) < 0){
+            return ResponseEntity.badRequest().body("{\"error\": \"Insufficient funds\"}");
+        }else{
+            user.setBalanceAvailable(user.getBalanceAvailable().subtract(trade.getValueWithoutSpread() ));
+            user.setBalanceInvested(user.getBalanceInvested().add(trade.getInitialInvestment()));
+            userRepository.save(user);
+
+            System.out.println(user);
+        }
+
+        if(trade.getTradeStatus().equals("Waiting")){
+            tradeAspect.setTradeStatus(trade, "Open");
+            tradeRepository.save(trade);
+            return ResponseEntity.ok().body("{\"message\": \"Trade activated\"}");
+        }else{
+            return ResponseEntity.badRequest().body("{\"error\": \"Invalid trade status\"}");
+        }
+    }
 
 
 
