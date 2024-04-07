@@ -308,7 +308,7 @@ export function ProfilePage() {
         <Navbar />
         <div className="w-full bg-inherit bg-no-repeat bg-cover justify-center items-center flex flex-col gap-10 flex-wrap p-10">
           <h1 className="w-full font-black text-3xl justify-start items-center text-left flex flex-row gap-4">
-            <p>My Profile</p>
+            <p>My Dashboard</p>
           </h1>
           <div className="w-full flex flex-row gap-10 max-sm:flex-col">
             <section className="flex-1 flex flex-col justify-start items-start gap-4">
