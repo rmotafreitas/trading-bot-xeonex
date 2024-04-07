@@ -10,5 +10,7 @@ import java.util.List;
 @Repository
 public interface TradeLogRepository extends JpaRepository<TradeLog, String> {
 
-    List<TradeLog> getAllTradeLogsByTrade(Trade trade);
+
+
+    List<TradeLog> findByTradeOrderByDateAsc(Trade trade);
 }

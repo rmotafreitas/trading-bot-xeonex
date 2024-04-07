@@ -3,13 +3,11 @@ package xeonex.xeonex.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import xeonex.xeonex.Utils;
-import xeonex.xeonex.domain.Trade.Trade;
-import xeonex.xeonex.domain.Trade.TradeAspect;
-import xeonex.xeonex.domain.Trade.TradeLog;
-import xeonex.xeonex.domain.Trade.TradeReceiveDTO;
+import xeonex.xeonex.domain.Trade.*;
 import xeonex.xeonex.domain.User.Risk;
 import xeonex.xeonex.domain.User.User;
 import xeonex.xeonex.domain.User.UserUpdateRequestDTO;
@@ -21,10 +19,9 @@ import xeonex.xeonex.service.GptService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
 
 @RestController
 @RequestMapping("/trade")
@@ -243,6 +240,65 @@ public class TradeController {
         }
     }
 
+    @GetMapping("/all")
+    public ResponseEntity getTradeInfoEndPoint(@RequestHeader("Authorization") String bearerToken) {
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User user = (User) userRepository.findByLogin(userLogin);
+        List<Trade> trades = tradeRepository.findByUserOrderById(user);
 
+        List<Map<String, Object> > tradesData = new ArrayList<>();
+        for (Trade trade : trades) {
+            tradesData.add( buildMapForTrade(trade));
+        }
+
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            String json = objectMapper.writeValueAsString(tradesData);
+            return ResponseEntity.ok().body(json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao converter para JSON");
+        }
+
+
+    }
+
+    public   Map<String, Object> buildMapForTrade(Trade trade){
+        Map<String, Object> tradeData = new LinkedHashMap<>();
+
+        tradeData.put("trade_id", trade.getId());
+        tradeData.put("asset", trade.getAsset());
+        tradeData.put("buy_value", trade.getInitialInvestment());
+        tradeData.put("actual_value", trade.getCurrentBalance());
+        tradeData.put("risk", trade.getRisk().getRiskLevel());
+        tradeData.put("window_money", trade.getWindowMoney());
+        tradeData.put("take_profit_percentage", trade.getTakeProfit());
+        tradeData.put("stop_loss_percentage", trade.getStopLoss());
+        tradeData.put("take_profit_value", trade.getInitialInvestment().add(trade.getInitialInvestment().multiply(trade.getTakeProfit().divide(new BigDecimal(100)))));
+        tradeData.put("stop_loss_value", trade.getInitialInvestment().subtract(trade.getInitialInvestment().multiply(trade.getStopLoss().divide(new BigDecimal(100)))));
+        tradeData.put("trade_type", trade.getTradeType());
+        tradeData.put("trade_status", trade.getTradeStatus());
+        List<TradeLog> tradeLogs = tradeLogRepository.findByTradeOrderByDateAsc(trade);
+
+       List< Map<String,Object>> tradeLogsList= new ArrayList<>();
+        for (TradeLog tradeLog : tradeLogs) {
+            Map<String, Object> tradeLogsMap = new LinkedHashMap<>();
+            LocalDateTime date = tradeLog.getDate();
+            long timestamp = date.toEpochSecond(ZoneOffset.UTC);
+            tradeLogsMap.put("date", timestamp);
+            tradeLogsMap.put("action", tradeLog.getAction());
+            tradeLogsMap.put("value", new BigDecimal( Double.parseDouble(tradeLog.getValue())));
+            tradeLogsList.add(tradeLogsMap);
+        }
+
+        tradeData.put("trade_logs", tradeLogsList);
+
+
+        return tradeData;
+
+    }
 
 }

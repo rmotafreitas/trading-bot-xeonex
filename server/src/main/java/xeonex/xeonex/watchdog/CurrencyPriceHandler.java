@@ -36,7 +36,13 @@ public class CurrencyPriceHandler {
     @Scheduled(fixedRate = 1000)
     public void handleCurrencyPrice() {
 
-        atualizarTrades();
+        try{
+            atualizarTrades();
+        }catch (Exception e){
+            System.out.println("Limitacao API");
+        }
+
+
         atualizaSaldoUsers();
 
 

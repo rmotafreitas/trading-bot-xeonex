@@ -39,6 +39,8 @@ public class CoinInfoController {
     @Value("${uphold.api.url.price}")
     private String UPHOLD_API_URL_PRICE;
 
+    @Value("${binance.api.bidprice}")
+    private String BINANCE_API_URL_BIDPRICE;
     @Autowired
     private BinanceService binanceService;
 
@@ -100,6 +102,21 @@ public class CoinInfoController {
 
 
 
+    }
+    public String coinPriceBinance(String pair) {
+
+        String url = BINANCE_API_URL_BIDPRICE + "?symbol=" + pair;
+        String body = restTemplate.getForEntity(url, String.class).getBody();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = null;
+        try {
+            jsonNode = objectMapper.readTree(body);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return jsonNode.toString();
     }
 
     public String coinPrice(String pair) {

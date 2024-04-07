@@ -15,4 +15,5 @@ public interface TradeRepository  extends JpaRepository<Trade, String> {
 
     Trade findTradyById(String id);
 
+    List<Trade> findByUserOrderById(User user);
 }
