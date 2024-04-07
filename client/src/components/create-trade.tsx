@@ -392,12 +392,21 @@ function TimeBtn({
         selectedTime === time ? "bg-primary" : "bg-muted"
       } ${inOnTheLeft ? "rounded-l-md" : ""} ${
         isOnTheRight ? "rounded-r-md" : ""
-      } ${isOnTheMiddle ? "rounded-none" : ""}`}
+      } ${isOnTheMiddle ? "rounded-none" : ""}
+      
+      
+        ${
+          selectedTime === time
+            ? "text-white group:hover:text-white"
+            : "text-primary"
+        }
+
+        hover:${selectedTime === time ? "text-white" : "text-black"}
+      `}
       onClick={() => setSelectedTime(time)}
     >
       <Label
         className={`text-base 
-        ${selectedTime === time ? "text-white" : "text-primary"}
       `}
       >
         {text}
