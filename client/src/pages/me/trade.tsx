@@ -2,7 +2,7 @@ import { TradeParams } from "@/App";
 import { Navbar } from "@/components/navbar";
 import api from "@/lib/api/api";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import Chart from "react-apexcharts";
@@ -11,13 +11,14 @@ import { getCryptoLive, TypeCryptoLive, usdtToCrypto } from "@/lib/api";
 import { TradeTable } from "./trades-logs.table";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
+import { LoaderIcon } from "lucide-react";
 
 export function TradePage() {
   const { tradeId } = useParams<TradeParams>();
   const [data, setData] = useState<any>({});
   const { user } = useAuth();
 
-  const [firstTime, setFirstTime] = useState(true);
+  const firstTime = useRef(true);
 
   const { theme } = useTheme();
 
@@ -33,8 +34,8 @@ export function TradePage() {
     if (res.data.trade_status === "Open") {
       setData(res.data);
     }
-    if (firstTime) {
-      setFirstTime(false);
+    if (firstTime.current) {
+      firstTime.current = false;
       setData(res.data);
     }
   };
@@ -43,7 +44,7 @@ export function TradePage() {
     setInterval(() => {
       hydrate();
     }, 4000);
-  }, [tradeId, user]);
+  }, [tradeId, user, firstTime]);
 
   const tripChart = {
     type: "line",
@@ -124,7 +125,17 @@ export function TradePage() {
     },
   };
 
-  if (!data.trade_logs) return <div>Loading...</div>;
+  if (!data.trade_logs)
+    return (
+      <div className="flex flex-col gap-6 min-h-screen min-w-full">
+        <Navbar />
+        <div className="w-full bg-inherit bg-no-repeat bg-cover min-h-96 justify-center items-center flex flex-col">
+          <h1 className="bg-clip-text text-transparent font-bold text-7xl bg-gradient-to-r from-[#5350F6] to-[#E662FE] mt-20 text-center">
+            <LoaderIcon className="w-10 h-10 animate-spin mx-auto text-primary" />
+          </h1>
+        </div>
+      </div>
+    );
   return (
     <div className="flex flex-col gap-6 min-h-screen min-w-full">
       <Navbar />

@@ -253,21 +253,21 @@ export function CreateTrade({
                   selectedTime={selectedTime}
                   setSelectedTime={() => setSelectedTime("15m")}
                   inOnTheLeft
-                  text="Fast trade"
+                  text="Fast trade (15-30m)"
                 />
                 <TimeBtn
                   time="4h"
                   selectedTime={selectedTime}
                   setSelectedTime={() => setSelectedTime("4h")}
                   isOnTheMiddle
-                  text="Medium trade"
+                  text="Medium trade (1-9h)"
                 />
                 <TimeBtn
                   time="1d"
                   selectedTime={selectedTime}
                   setSelectedTime={() => setSelectedTime("1d")}
                   isOnTheRight
-                  text="Slow trade"
+                  text="Slow trade (1-3d)"
                 />
               </div>
             </div>
