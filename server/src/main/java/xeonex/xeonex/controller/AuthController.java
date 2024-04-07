@@ -51,13 +51,31 @@ public class AuthController {
 
     }
 
+    @PostMapping("/withdraw")
+    public ResponseEntity withdraw(@RequestHeader("Authorization") String bearerToken, @RequestBody WithdrawDTO withdrawDTO) {
+        String token = bearerToken.substring(7);
+        String userLogin = tokenService.validateToken(token);
+        User user = (User) userRepository.findByLogin(userLogin);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (withdrawDTO.getAmmount().compareTo(user.getBalanceAvailable()) > 0) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Insufficient balance\"}");
+        }
 
+        user.setBalanceAvailable(user.getBalanceAvailable().subtract(withdrawDTO.getAmmount()));
+        userRepository.save(user);
+        return ResponseEntity.ok(userMapper.toUserMeDTO(user));
+    }
+
+    @Autowired
+    private UserMapper userMapper;
     @GetMapping("/me")
     public ResponseEntity<?> getLoggedInUser(@RequestHeader("Authorization") String bearerToken) {
             String token = bearerToken.substring(7);
             String userLogin = tokenService.validateToken(token);
             userRepository.findByLogin(userLogin);
-            return ResponseEntity.ok( UserMapper.toUserMeDTO((User) userRepository.findByLogin(userLogin)));
+            return ResponseEntity.ok( userMapper.toUserMeDTO((User) userRepository.findByLogin(userLogin)));
     }
 
     @PutMapping("/me")
@@ -90,7 +108,7 @@ public class AuthController {
 
         userRepository.save(user);
 
-        return ResponseEntity.ok(UserMapper.toUserMeDTO(user));
+        return ResponseEntity.ok(userMapper.toUserMeDTO(user));
     }
 
 

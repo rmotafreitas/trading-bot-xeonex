@@ -74,31 +74,50 @@ public class CurrencyPriceHandler {
             botUpdateTrade(t);
             atualizaValorTrade(t);
 
-            BigDecimal aux = t.getStopLoss().multiply(t.getInitialInvestment(), MathContext.DECIMAL32).multiply(new BigDecimal(0.01), MathContext.DECIMAL32);
-            BigDecimal StopLoss =  t.getInitialInvestment().subtract(aux);
+            BigDecimal profif = new BigDecimal(0);
+            if(t.getTradeType().equals("LONG")){
+                profif = t.getInitialInvestment().subtract(t.getCurrentBalance());
+            }
+            if(t.getTradeType().equals("SHORT")){
+                profif = t.getCurrentBalance().subtract(t.getInitialInvestment());
+            }
 
-            aux = t.getTakeProfit().multiply(t.getInitialInvestment(), MathContext.DECIMAL32).multiply(new BigDecimal(0.01), MathContext.DECIMAL32);
-            BigDecimal TakeProfit =  t.getInitialInvestment().add(aux);
+            BigDecimal ValorParaStopLoss = t.getInitialInvestment().multiply(t.getStopLoss().divide(new BigDecimal(100))).negate();
+            BigDecimal ValorParaTakeProfit = t.getInitialInvestment().multiply(t.getTakeProfit().divide(new BigDecimal(100)));
 
-
-            if(t.getCurrentBalance().compareTo(StopLoss) <= 0) {
+            if(profif.compareTo(ValorParaStopLoss) <= 0) {
                 atualizaSaldoUser(t.getUser());
                 t.setTradeStatus("Stop Loss");
                 tradeRepository.save(t);
                 TradeLog tradeLog = new TradeLog(t, "Stop Loss",t.getCurrentBalance().toString());
                 tra.save(tradeLog);
-                t.getUser().setBalanceInvested(t.getUser().getBalanceInvested().subtract(t.getCurrentBalance()));
-                t.getUser().setBalanceAvailable(t.getUser().getBalanceAvailable().add(t.getCurrentBalance()));
+
+
+
+                t.getUser().setBalanceInvested(t.getUser().getBalanceInvested().subtract(t.getInitialInvestment().add(profif)));
+                t.getUser().setBalanceAvailable(t.getUser().getBalanceAvailable().add(t.getInitialInvestment().add(profif)));
                 userRepository.save(t.getUser());
-            }else if(t.getCurrentBalance().compareTo(TakeProfit) >= 0) {
+            }else if(profif.compareTo(ValorParaTakeProfit) >= 0) {
                 atualizaSaldoUser(t.getUser());
                 t.setTradeStatus("Take Profit");
                 tradeRepository.save(t);
                 TradeLog tradeLog = new TradeLog(t, "Take Profit",t.getCurrentBalance().toString());
                 tra.save(tradeLog);
-                t.getUser().setBalanceInvested(t.getUser().getBalanceInvested().subtract(t.getCurrentBalance()));
-                t.getUser().setBalanceAvailable(t.getUser().getBalanceAvailable().add(t.getCurrentBalance()));
+
+                if(t.getTradeType().equals("LONG")){
+
+                    profif = t.getInitialInvestment().subtract(t.getCurrentBalance());
+                }
+
+                if(t.getTradeType().equals("SHORT")){
+
+                    profif = t.getCurrentBalance().subtract(t.getInitialInvestment());
+                }
+
+                t.getUser().setBalanceInvested(t.getUser().getBalanceInvested().subtract(t.getInitialInvestment().add(profif)));
+                t.getUser().setBalanceAvailable(t.getUser().getBalanceAvailable().add(t.getInitialInvestment().add(profif)));
                 userRepository.save(t.getUser());
+
             }
 
 
@@ -167,8 +186,20 @@ public class CurrencyPriceHandler {
             tradeRepository.save(t);
             TradeLog tradeLog = new TradeLog(t, "Close",t.getCurrentBalance().toString(),explanation);
             tra.save(tradeLog);
-            t.getUser().setBalanceInvested(t.getUser().getBalanceInvested().subtract(t.getCurrentBalance()) );
-            t.getUser().setBalanceAvailable(t.getUser().getBalanceAvailable().add(t.getCurrentBalance()));
+
+            BigDecimal profif = new BigDecimal(0);
+            if(t.getTradeType().equals("LONG")){
+
+                profif = t.getInitialInvestment().subtract(t.getCurrentBalance());
+            }
+
+            if(t.getTradeType().equals("SHORT")){
+
+                profif = t.getCurrentBalance().subtract(t.getInitialInvestment());
+            }
+
+            t.getUser().setBalanceInvested(t.getUser().getBalanceInvested().subtract(t.getInitialInvestment().add(profif)));
+            t.getUser().setBalanceAvailable(t.getUser().getBalanceAvailable().add(t.getInitialInvestment().add(profif)));
             userRepository.save(t.getUser());
         }else{
             TradeLog tradeLog = new TradeLog(t, "Mantain",t.getCurrentBalance().toString(),explanation);
@@ -238,7 +269,7 @@ public class CurrencyPriceHandler {
             for (Trade t : tradeRepository.findTradesByUser(u)){
                 if(t.getTradeStatus().equals("Open")){
 
-                    saldo = saldo.add(t.getCurrentBalance());
+                    saldo = saldo.add(t.getInitialInvestment());
                 }
             }
 
