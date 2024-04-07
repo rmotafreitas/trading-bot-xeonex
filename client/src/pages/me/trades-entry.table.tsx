@@ -13,7 +13,7 @@ import { FileVideo, FilterIcon, Globe } from "lucide-react";
 import { useEffect, useState } from "react";
 import { columns, HistoryItemTradeEntry } from "./trades-entry.columns";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { TypeCryptoLive } from "@/lib/api";
+import { TypeCryptoLive, usdtToCrypto } from "@/lib/api";
 
 export const deleteRow = async (id: string) => {};
 
@@ -29,20 +29,46 @@ export function TradesTable({ BTC, ETH }: TradeTableProps) {
 
   useEffect(() => {
     api.get("/trade/all").then((response) => {
-      let aux: HistoryItemTradeEntry[] = response.data;
+      let aux = response.data;
       aux = aux.map((item: any) => {
-        if (item.trade_status.toLowerCase() === "waiting") return;
-        console.log(item);
-        const newItem: HistoryItemTradeEntry = {
-          trade_id: item.trade_id,
-          valor_atual: item.valor_atual,
-          stop_loss: item.stop_loss,
-          take_profit: item.take_profit,
-          risk: item.risk,
-          created_at: item.created_at,
-          window_money: item.window_money,
+        /*
+              if(trade.getTradeStatus().equals("Open")){
+
+                BigDecimal profit = BigDecimal.ZERO;
+                if (trade.getTradeType().equals("LONG")) {
+                    profit = trade.getCurrentBalance().subtract(trade.getInitialInvestment());
+                } else if (trade.getTradeType().equals("SHORT")) {
+                    profit = trade.getInitialInvestment().subtract(trade.getCurrentBalance());
+                }
+                lucro = lucro.add(profit);
+
+            }
+            */
+        item.profit =
+          item.trade_type === "LONG"
+            ? item.actual_value - item.buy_value
+            : item.buy_value - item.actual_value;
+        item.profit = Number(item.profit).toFixed(2);
+        return {
+          ...item,
+          valor_compra: Number(item.buy_value).toFixed(2),
+          valor_atual:
+            /* Number(item.actual_value).toFixed(2) */ item.trade_status ===
+            "Open"
+              ? Number(item.actual_value).toFixed(2)
+              : Number(item.profit).toFixed(2),
+          stop_loss: Number(item.stop_loss_value).toFixed(2),
+          take_profit: Number(item.take_profit_value).toFixed(2),
+          created_at: new Date(item.trade_logs[0].date * 1000)
+            .toLocaleString()
+            .split(",")[0],
+          window_money:
+            item.window_money === "4h"
+              ? "Medium"
+              : item.window_money === "1d"
+              ? "Long"
+              : "Short",
         };
-        return newItem;
       });
       console.log(response.data);
       console.log(aux);
@@ -51,14 +77,14 @@ export function TradesTable({ BTC, ETH }: TradeTableProps) {
   }, [user]);
 
   return (
-    <>
+    <div className="relative mt-8">
       <DataTable columns={columns} data={data} />
       <DropdownMenu>
-        <DropdownMenuTrigger className="absolute top-[4.85rem] right-2">
+        <DropdownMenuTrigger className="absolute top-0 right-2">
           <FilterIcon className="text-xl text-muted-foreground" />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuLabel>Media Filter</DropdownMenuLabel>
+          <DropdownMenuLabel>Filter</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="flex flex-row gap-2 justify-start items-center">
             <FileVideo className="w-4" />
@@ -70,6 +96,6 @@ export function TradesTable({ BTC, ETH }: TradeTableProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </>
+    </div>
   );
 }

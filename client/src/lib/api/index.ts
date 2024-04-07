@@ -142,6 +142,20 @@ export type TypeCryptoLive = {
   day_percent_change: number;
 };
 
+function roundUntilNonZero(number: number): number {
+  let roundedNumber = number;
+
+  // Keep rounding until the first non-zero digit appears
+  while (Math.abs(roundedNumber) < 0.001 && roundedNumber !== 0) {
+    roundedNumber *= 10;
+  }
+
+  // Round the number to three decimal places
+  roundedNumber = Math.round(roundedNumber * 1000) / 1000;
+
+  return roundedNumber;
+}
+
 function usdtToCrypto(usdt: number, crypto: TypeCryptoLive): number {
   return usdt / crypto.ask;
 }
