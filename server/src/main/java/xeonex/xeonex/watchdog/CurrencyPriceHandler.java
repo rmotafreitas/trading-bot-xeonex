@@ -47,9 +47,9 @@ public class CurrencyPriceHandler {
 
     Map<String,BigDecimal> map;
 
-    @Scheduled(fixedRate = 2000)
+    @Scheduled(fixedRate = 3000)
     public void handleCurrencyPrice() {
-       counter+=1;
+       counter+=2;
 
 
         map = coinInfoController.getPrices();
