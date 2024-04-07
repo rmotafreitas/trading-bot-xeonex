@@ -302,284 +302,289 @@ export function ProfilePage() {
 
   const [isTradeDialogOpen, setIsTradeDialogOpen] = useState(false);
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <div className="w-full bg-inherit bg-no-repeat bg-cover justify-center items-center flex flex-col gap-10 flex-wrap p-10">
-        <h1 className="w-full font-black text-3xl justify-start items-center text-left flex flex-row gap-4">
-          <p>My Profile</p>
-        </h1>
-        <div className="w-full flex flex-row gap-10 max-sm:flex-col">
-          <section className="flex-1 flex flex-col justify-start items-start gap-4">
-            <div className="w-full bg-muted rounded-md overflow-hidden h-fit p-4 flex flex-col justify-start">
-              <div className="flex flex-row gap-4 justify-between items-center flex-wrap w-full">
-                <p className="text-2xl font-bold">Markets</p>
-                <Menubar className="bg-muted">
-                  <MenubarMenu>
-                    <MenubarTrigger>Crypto: {selectedCrypto}</MenubarTrigger>
-                    <MenubarContent>
-                      <MenubarItem onClick={() => setSelectedCrypto("BTC")}>
-                        BTC
-                      </MenubarItem>
-                      <MenubarItem onClick={() => setSelectedCrypto("ETH")}>
-                        ETH
-                      </MenubarItem>
-                    </MenubarContent>
-                  </MenubarMenu>
-                  <MenubarMenu>
-                    <MenubarTrigger>
-                      Interval: {selectedInterval}
-                    </MenubarTrigger>
-                    <MenubarContent>
-                      <MenubarItem onClick={() => setSelectedInterval("1h")}>
-                        1h
-                      </MenubarItem>
-                      <MenubarItem onClick={() => setSelectedInterval("1d")}>
-                        1d
-                      </MenubarItem>
-                      <MenubarItem onClick={() => setSelectedInterval("1w")}>
-                        1w
-                      </MenubarItem>
-                      <MenubarItem onClick={() => setSelectedInterval("1m")}>
-                        1m
-                      </MenubarItem>
-                    </MenubarContent>
-                  </MenubarMenu>
-                  <MenubarMenu>
-                    <MenubarTrigger>Type: {selectedType}</MenubarTrigger>
-                    <MenubarContent>
-                      <MenubarItem onClick={() => setSelectedType("line")}>
-                        Line
-                      </MenubarItem>
-                      <MenubarItem onClick={() => setSelectedType("candle")}>
-                        Candle
-                      </MenubarItem>
-                    </MenubarContent>
-                  </MenubarMenu>
-                </Menubar>
+  if (user) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <div className="w-full bg-inherit bg-no-repeat bg-cover justify-center items-center flex flex-col gap-10 flex-wrap p-10">
+          <h1 className="w-full font-black text-3xl justify-start items-center text-left flex flex-row gap-4">
+            <p>My Profile</p>
+          </h1>
+          <div className="w-full flex flex-row gap-10 max-sm:flex-col">
+            <section className="flex-1 flex flex-col justify-start items-start gap-4">
+              <div className="w-full bg-muted rounded-md overflow-hidden h-fit p-4 flex flex-col justify-start">
+                <div className="flex flex-row gap-4 justify-between items-center flex-wrap w-full">
+                  <p className="text-2xl font-bold">Markets</p>
+                  <Menubar className="bg-muted">
+                    <MenubarMenu>
+                      <MenubarTrigger>Crypto: {selectedCrypto}</MenubarTrigger>
+                      <MenubarContent>
+                        <MenubarItem onClick={() => setSelectedCrypto("BTC")}>
+                          BTC
+                        </MenubarItem>
+                        <MenubarItem onClick={() => setSelectedCrypto("ETH")}>
+                          ETH
+                        </MenubarItem>
+                      </MenubarContent>
+                    </MenubarMenu>
+                    <MenubarMenu>
+                      <MenubarTrigger>
+                        Interval: {selectedInterval}
+                      </MenubarTrigger>
+                      <MenubarContent>
+                        <MenubarItem onClick={() => setSelectedInterval("1h")}>
+                          1h
+                        </MenubarItem>
+                        <MenubarItem onClick={() => setSelectedInterval("1d")}>
+                          1d
+                        </MenubarItem>
+                        <MenubarItem onClick={() => setSelectedInterval("1w")}>
+                          1w
+                        </MenubarItem>
+                        <MenubarItem onClick={() => setSelectedInterval("1m")}>
+                          1m
+                        </MenubarItem>
+                      </MenubarContent>
+                    </MenubarMenu>
+                    <MenubarMenu>
+                      <MenubarTrigger>Type: {selectedType}</MenubarTrigger>
+                      <MenubarContent>
+                        <MenubarItem onClick={() => setSelectedType("line")}>
+                          Line
+                        </MenubarItem>
+                        <MenubarItem onClick={() => setSelectedType("candle")}>
+                          Candle
+                        </MenubarItem>
+                      </MenubarContent>
+                    </MenubarMenu>
+                  </Menubar>
+                </div>
+                {selectedType === "candle" ? (
+                  <Chart {...candleChartConfig} />
+                ) : (
+                  <Chart {...lineChartConfig} />
+                )}
               </div>
-              {selectedType === "candle" ? (
-                <Chart {...candleChartConfig} />
-              ) : (
-                <Chart {...lineChartConfig} />
-              )}
-            </div>
 
-            <div className="w-full bg-muted rounded-md overflow-hidden h-fit p-4 flex flex-col justify-start">
-              <div className="flex flex-row gap-4 justify-between items-center flex-wrap w-full">
-                <p className="text-2xl font-bold">Trades</p>
-                <Button
-                  onClick={() => setIsTradeDialogOpen(true)}
-                  className="px-2 flex flex-row gap-2 flex-wrap justify-center items-center h-max"
-                >
-                  <span className="flex flex-col justify-center items-center text-center">
-                    Create trade
-                  </span>
-                  <CirclePlus />
-                </Button>
+              <div className="w-full bg-muted rounded-md overflow-hidden h-fit p-4 flex flex-col justify-start">
+                <div className="flex flex-row gap-4 justify-between items-center flex-wrap w-full">
+                  <p className="text-2xl font-bold">Trades</p>
+                  <Button
+                    onClick={() => setIsTradeDialogOpen(true)}
+                    className="px-2 flex flex-row gap-2 flex-wrap justify-center items-center h-max"
+                  >
+                    <span className="flex flex-col justify-center items-center text-center">
+                      Create trade
+                    </span>
+                    <CirclePlus />
+                  </Button>
+                </div>
+                {BTC &&
+                  ETH &&
+                  selectedCurrency &&
+                  user &&
+                  possibleCurrencies.length > 0 && (
+                    <TradesTable BTC={BTC} ETH={ETH} />
+                  )}
               </div>
               {BTC &&
                 ETH &&
                 selectedCurrency &&
                 user &&
                 possibleCurrencies.length > 0 && (
-                  <TradesTable BTC={BTC} ETH={ETH} />
+                  <CreateTrade
+                    isOpen={isTradeDialogOpen}
+                    onClose={() => setIsTradeDialogOpen(false)}
+                    BTC={BTC}
+                    ETH={ETH}
+                    selectedCurrency={selectedCurrency}
+                    possibleCurrencies={possibleCurrencies}
+                    user={user}
+                  />
                 )}
-            </div>
-            {BTC &&
-              ETH &&
-              selectedCurrency &&
-              user &&
-              possibleCurrencies.length > 0 && (
-                <CreateTrade
-                  isOpen={isTradeDialogOpen}
-                  onClose={() => setIsTradeDialogOpen(false)}
-                  BTC={BTC}
-                  ETH={ETH}
-                  selectedCurrency={selectedCurrency}
-                  possibleCurrencies={possibleCurrencies}
-                  user={user}
-                />
-              )}
-          </section>
-          <aside className="flex flex-col gap-6 justify-start items-start flex-wrap flex-1 max-w-sm max-sm:max-w-full">
-            <div className="flex flex-col p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit w-full">
-              <div className="flex flex-row gap-3 justify-start items-center flex-wrap">
-                <img
-                  className="w-20 h-20 aspect-square object-cover object-center rounded-full border-4 border-primary"
-                  src="user.png"
-                  alt=""
-                />
-                <p>{user?.login}</p>
-              </div>
-              <div className="flex flex-row justify-between gap-3 items-center flex-wrap">
-                <Label className="w-fit font-semibold">Risk percentage:</Label>
-                <Input
-                  type="number"
-                  min={5}
-                  max={80}
-                  defaultValue={user?.risk}
-                  className="flex-1"
-                  onChange={(e) => {
-                    if (user) {
-                      update({
-                        ...user,
-                        risk: +e.target.value,
-                      });
-                    }
-                  }}
-                />
-              </div>
-              <div className="flex flex-row gap-3 justify-between items-center flex-wrap">
-                <Button
-                  onClick={handleSave}
-                  className="flex flex-1 max-sm:w-full justify-center items-center"
-                >
-                  Save
-                </Button>
-                <Button
-                  onClick={handleLogout}
-                  className="flex flex-1 max-sm:w-full justify-center items-center"
-                >
-                  Logout
-                </Button>
-              </div>
-            </div>
-            <div className="flex flex-col gap-4 justify-start items-start flex-wrap w-full">
-              <div className="flex flex-col w-full p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit">
-                <div className="flex flex-col gap-1 justify-center items-start text-xl font-bold">
-                  <p>Invested</p>
-                  <div className="flex flex-row gap-3 justify-start items-center text-xl font-bold">
-                    <Wallet size={25} />
-                    <p>
-                      {user?.balanceInvested} (
-                      {
-                        possibleCurrencies.find(
-                          (currency) => currency.name === user?.currency
-                        )?.token
-                      }
-                      )
-                    </p>
-                  </div>
+            </section>
+            <aside className="flex flex-col gap-6 justify-start items-start flex-wrap flex-1 max-w-sm max-sm:max-w-full">
+              <div className="flex flex-col p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit w-full">
+                <div className="flex flex-row gap-3 justify-start items-center flex-wrap">
+                  <img
+                    className="w-20 h-20 aspect-square object-cover object-center rounded-full border-4 border-primary"
+                    src="user.png"
+                    alt=""
+                  />
+                  <p>{user?.login}</p>
                 </div>
-              </div>
-              <div className="flex flex-col w-full p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit">
-                <div className="flex flex-col gap-1 justify-center items-start text-xl font-bold">
-                  <p>Saved</p>
-                  <div className="flex flex-row gap-3 justify-start items-center text-xl font-bold">
-                    <Wallet size={25} />
-                    <p>
-                      {user?.balanceAvailable} (
-                      {
-                        possibleCurrencies.find(
-                          (currency) => currency.name === user?.currency
-                        )?.token
+                <div className="flex flex-row justify-between gap-3 items-center flex-wrap">
+                  <Label className="w-fit font-semibold">
+                    Risk percentage:
+                  </Label>
+                  <Input
+                    type="number"
+                    min={5}
+                    max={80}
+                    defaultValue={user?.risk}
+                    className="flex-1"
+                    onChange={(e) => {
+                      if (user) {
+                        update({
+                          ...user,
+                          risk: +e.target.value,
+                        });
                       }
-                      )
-                    </p>
-                  </div>
+                    }}
+                  />
                 </div>
-              </div>
-              <div className="flex flex-col w-full p-4 bg-muted rounded-md overflow-hidden gap-4 h-fit">
-                <div className="flex flex-col gap-3 justify-center items-start text-xl font-bold">
-                  <p>
-                    Total:{" "}
-                    <span>
-                      {user?.balanceTotal} (
-                      {
-                        possibleCurrencies.find(
-                          (currency) => currency.name === user?.currency
-                        )?.token
-                      }
-                      )
-                    </span>
-                  </p>
-                  <div className="flex flex-row gap-3 justify-start items-center text-xl font-bold w-full">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button className="flex-1">Add amount</Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                          <DialogTitle>Add amount</DialogTitle>
-                          <DialogDescription>
-                            You can add more amount to your account
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-left">Amount:</Label>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={100000}
-                              id="amount"
-                              className="col-span-3"
-                              onChange={(e) =>
-                                setSelectedAmount(+e.target.value)
-                              }
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <DialogClose asChild>
-                            <Button onClick={handleAddAmount} type="submit">
-                              Add
-                            </Button>
-                          </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button className="flex-1">Withdraw</Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                          <DialogTitle>Withdraw amount</DialogTitle>
-                          <DialogDescription>
-                            You can withdraw amount from your account
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-left">Amount:</Label>
-                            <Input id="amount" className="col-span-3" />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button type="submit">Withdraw</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
+                <div className="flex flex-row gap-3 justify-between items-center flex-wrap">
+                  <Button
+                    onClick={handleSave}
+                    className="flex flex-1 max-sm:w-full justify-center items-center"
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    onClick={handleLogout}
+                    className="flex flex-1 max-sm:w-full justify-center items-center"
+                  >
+                    Logout
+                  </Button>
                 </div>
               </div>
               <div className="flex flex-col gap-4 justify-start items-start flex-wrap w-full">
-                {BTC && selectedCurrency && (
-                  <AssetComponent
-                    crypto={BTC}
-                    selectedCurrency={selectedCurrency}
-                    possibleCurrencies={possibleCurrencies}
-                    cryptoName="Bitcoin"
-                  />
-                )}
+                <div className="flex flex-col w-full p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit">
+                  <div className="flex flex-col gap-1 justify-center items-start text-xl font-bold">
+                    <p>Invested</p>
+                    <div className="flex flex-row gap-3 justify-start items-center text-xl font-bold">
+                      <Wallet size={25} />
+                      <p>
+                        {Number(user?.lucro + user?.balanceInvested).toFixed(2)}{" "}
+                        (
+                        {
+                          possibleCurrencies.find(
+                            (currency) => currency.name === user?.currency
+                          )?.token
+                        }
+                        )
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col w-full p-4 bg-muted rounded-md overflow-hidden gap-3 h-fit">
+                  <div className="flex flex-col gap-1 justify-center items-start text-xl font-bold">
+                    <p>Saved</p>
+                    <div className="flex flex-row gap-3 justify-start items-center text-xl font-bold">
+                      <Wallet size={25} />
+                      <p>
+                        {user?.balanceAvailable} (
+                        {
+                          possibleCurrencies.find(
+                            (currency) => currency.name === user?.currency
+                          )?.token
+                        }
+                        )
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col w-full p-4 bg-muted rounded-md overflow-hidden gap-4 h-fit">
+                  <div className="flex flex-col gap-3 justify-center items-start text-xl font-bold">
+                    <p>
+                      Total:{" "}
+                      <span>
+                        {user?.balanceTotal} (
+                        {
+                          possibleCurrencies.find(
+                            (currency) => currency.name === user?.currency
+                          )?.token
+                        }
+                        )
+                      </span>
+                    </p>
+                    <div className="flex flex-row gap-3 justify-start items-center text-xl font-bold w-full">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button className="flex-1">Add amount</Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Add amount</DialogTitle>
+                            <DialogDescription>
+                              You can add more amount to your account
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label className="text-left">Amount:</Label>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={100000}
+                                id="amount"
+                                className="col-span-3"
+                                onChange={(e) =>
+                                  setSelectedAmount(+e.target.value)
+                                }
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button onClick={handleAddAmount} type="submit">
+                                Add
+                              </Button>
+                            </DialogClose>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button className="flex-1">Withdraw</Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Withdraw amount</DialogTitle>
+                            <DialogDescription>
+                              You can withdraw amount from your account
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label className="text-left">Amount:</Label>
+                              <Input id="amount" className="col-span-3" />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button type="submit">Withdraw</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-4 justify-start items-start flex-wrap w-full">
+                  {BTC && selectedCurrency && (
+                    <AssetComponent
+                      crypto={BTC}
+                      selectedCurrency={selectedCurrency}
+                      possibleCurrencies={possibleCurrencies}
+                      cryptoName="Bitcoin"
+                    />
+                  )}
 
-                {ETH && selectedCurrency && (
-                  <AssetComponent
-                    crypto={ETH}
-                    selectedCurrency={selectedCurrency}
-                    possibleCurrencies={possibleCurrencies}
-                    cryptoName="Ethereum"
-                  />
-                )}
+                  {ETH && selectedCurrency && (
+                    <AssetComponent
+                      crypto={ETH}
+                      selectedCurrency={selectedCurrency}
+                      possibleCurrencies={possibleCurrencies}
+                      cryptoName="Ethereum"
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-          </aside>
+            </aside>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 interface AssetComponentProps {

@@ -23,6 +23,7 @@ export type User = {
   balanceTotal: number;
   risk: number;
   currency: string;
+  lucro: number;
   // Add more user-related fields as needed
 };
 
@@ -78,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (res) {
         const me = await getMe();
         if (me) {
+          console.log(me);
           setUser(me);
           return true;
         }
