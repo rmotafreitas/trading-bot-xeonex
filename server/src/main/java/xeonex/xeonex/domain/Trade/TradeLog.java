@@ -32,12 +32,23 @@ public class TradeLog {
     @Column(name = "current_value")
     private String value;
 
+    @Column(name = "msg", columnDefinition = "TEXT")
+    private String explanation;
+
     public TradeLog(Trade trade, String action,String value) {
         this.trade = trade;
         this.action = action;
         this.date = LocalDateTime.now();
         this.value = value;
+        this.explanation = "";
     }
 
 
+    public TradeLog(Trade t, String action, String value, String msg) {
+        this.trade = t;
+        this.action = action;
+        this.date = LocalDateTime.now();
+        this.value = value;
+        this.explanation = msg;
+    }
 }

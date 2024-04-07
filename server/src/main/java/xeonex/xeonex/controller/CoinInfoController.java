@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -190,11 +191,11 @@ public class CoinInfoController {
     }
 
 
-@GetMapping("/pairs")
-public ResponseEntity<List<String>> getPairs() {
-    List<String> possibleDayTypes = (List<String>) cryptoCurrencyService.getCryptoCyrrency().keySet();
-    return ResponseEntity.ok(possibleDayTypes);
-}
+    @GetMapping("/pairs")
+    public ResponseEntity<List<String>> getPairs() {
+        Set<String> possibleDayTypes =  cryptoCurrencyService.getCryptoCyrrency().keySet();
+        return ResponseEntity.ok(possibleDayTypes.stream().toList());
+    }
 
 
     @RequestMapping("/timeTypes")

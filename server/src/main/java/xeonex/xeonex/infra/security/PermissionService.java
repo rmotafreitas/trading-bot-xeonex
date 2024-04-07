@@ -21,31 +21,23 @@ public class PermissionService {
     public PermissionService() {
         // hierarchy
         hierarchy = new HashMap<>();
-
         SimpleGrantedAuthority user = new SimpleGrantedAuthority(UserRole.USER.toString());
-
         SimpleGrantedAuthority admin = new SimpleGrantedAuthority(UserRole.ADMIN.toString());
-
         hierarchy.put(UserRole.ADMIN, List.of( user, admin));
-
         hierarchy.put(UserRole.USER, List.of(user));
-
         // permissions
         urlPermissions = new HashMap<>();
-
 
         Map<HttpMethod, Set<UserRole>> auth = new HashMap<>();
         auth.put(HttpMethod.POST, null);
         urlPermissions.put("/auth/login", auth);
         urlPermissions.put("/auth/register", auth);
 
-
         auth = new HashMap<>();
         auth.put(HttpMethod.POST, null);
         auth.put(HttpMethod.GET, null);
         urlPermissions.put("/gpt/ask", auth);
         urlPermissions.put("/coin/{coinName}", auth);
-
 
 
 

@@ -84,7 +84,7 @@ public class TradeController {
             String json = mapper.writeValueAsString(tradeData);
             json += getIndicatorInfo(dto.getAsset(), dto.getWindow_money(), user);
 
-            String response = gptService.get_answer_by_bot(json);
+            String response = gptService.get_answer_by_bot(json,true);
 
             if(response.contains("DO_NOTHING")){
                 return ResponseEntity.ok().body(response);
@@ -196,8 +196,23 @@ public class TradeController {
 
         tradeRepository.save(trade);
 
+        BigDecimal profit = BigDecimal.ZERO;
+        if (trade.getTradeType().equals("LONG")) {
+            profit = trade.getCurrentBalance().subtract(trade.getInitialInvestment());
+        } else if (trade.getTradeType().equals("SHORT")) {
+            profit = trade.getInitialInvestment().subtract(trade.getCurrentBalance());
+        }
+
+
+
+        user.setBalanceInvested(user.getBalanceInvested().subtract(trade.getCurrentBalance()));
+        user.setBalanceAvailable(user.getBalanceAvailable().add(profit));
+
+        /*
         user.setBalanceInvested(user.getBalanceInvested().subtract(trade.getCurrentBalance()));
         user.setBalanceAvailable(user.getBalanceAvailable().add(trade.getCurrentBalance()));
+
+         */
 
         userRepository.save(user);
         return ResponseEntity.ok().body("{\"message\": \"Trade closed/cancelled\"}");
@@ -298,6 +313,28 @@ public class TradeController {
 
 
         return tradeData;
+
+    }
+
+    public BigDecimal calculateLucroByUser(User u ){
+
+     BigDecimal lucro = BigDecimal.ZERO;
+
+        for (Trade trade :    tradeRepository.findTradesByUser(u)) {
+
+            if(trade.getTradeStatus().equals("Open")){
+
+                BigDecimal profit = BigDecimal.ZERO;
+                if (trade.getTradeType().equals("LONG")) {
+                    profit = trade.getCurrentBalance().subtract(trade.getInitialInvestment());
+                } else if (trade.getTradeType().equals("SHORT")) {
+                    profit = trade.getInitialInvestment().subtract(trade.getCurrentBalance());
+                }
+                lucro = lucro.add(profit);
+
+            }
+        }
+        return lucro;
 
     }
 
