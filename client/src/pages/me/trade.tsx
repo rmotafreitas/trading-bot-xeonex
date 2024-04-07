@@ -2,7 +2,7 @@ import { TradeParams } from "@/App";
 import { Navbar } from "@/components/navbar";
 import api from "@/lib/api/api";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import Chart from "react-apexcharts";
@@ -18,7 +18,7 @@ export function TradePage() {
   const [data, setData] = useState<any>({});
   const { user } = useAuth();
 
-  const [firstTime, setFirstTime] = useState(true);
+  const firstTime = useRef(true);
 
   const { theme } = useTheme();
 
@@ -34,8 +34,8 @@ export function TradePage() {
     if (res.data.trade_status === "Open") {
       setData(res.data);
     }
-    if (firstTime) {
-      setFirstTime(false);
+    if (firstTime.current) {
+      firstTime.current = false;
       setData(res.data);
     }
   };
@@ -44,7 +44,7 @@ export function TradePage() {
     setInterval(() => {
       hydrate();
     }, 4000);
-  }, [tradeId, user]);
+  }, [tradeId, user, firstTime]);
 
   const tripChart = {
     type: "line",
